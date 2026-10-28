@@ -3,8 +3,9 @@
 Construct with `NewClient(path, options...)` or `NewClientFromPath(options...)`.
 Construction checks the executable and clones configuration without daemon or
 provider calls. Each operation receives its caller context. `WithCamp` chooses
-a default explicit scope; per-call Camp overrides it. Otherwise the CLI infers
-scope from child cwd (`WithWorkingDirectory`). Agent workspace
+a default explicit scope; per-call Camp overrides it. For final-only runs without an explicit camp, the CLI infers
+scope from child cwd (`WithWorkingDirectory`). Persistent handles and observation
+use explicit camp/session identities. Agent workspace
 (`SessionOptions.WorkingDirectory`, forwarded as `--workdir`) is separate.
 
 Session defaults, JSON config, environment maps, per-call files and timeout values
@@ -16,11 +17,20 @@ passed byte-for-byte on stdin, never argv or a shell. Relative files resolve fro
 the child cwd under existing CLI attachment rules.
 
 RunPrompt drains the complete stream and returns a typed result/error.
-StreamPrompt currently selects the advertised legacy run-v1 invocation without
-`--protocol-version`, and reports final-only fidelity. RequireLiveEvents rejects
-v1 before creating a session. Nil timeout keeps the CLI’s 30-minute default; pointer
-zero disables it; negative values fail before spawning. Caller cancellation
-always remains effective. Doctor health failure does not invalidate a valid CLI
+StreamPrompt prefers advertised run-v2 when an explicit camp and live daemon
+`chat_surfaces`, `durable_turns` and `turn_identity` capabilities are available.
+It reports live fidelity; successful output needs matching live completion plus
+scoped authoritative completed state for the fresh first attempt. An advertised
+typed receipt is required; older identity-capable daemons without that optional
+receipt remain supported. Unsupported live requirements or absent explicit camp
+select supported run-v1 with final-only fidelity when RequireLiveEvents is false.
+RequireLiveEvents fails before creation if live requirements are unavailable.
+There is no downgrade after a mutation starts.
+
+Nil timeout keeps the CLI's 30-minute default; pointer zero disables it; negative
+values fail before spawning. Caller cancellation always remains effective. Wire
+timeout/canceled errors preserve the standard context cause even when the caller
+context remains live. Doctor health failure does not invalidate a valid CLI
 capability document; discovery uses a bounded 30-second child.
 
 Use one consumer for Next/Result. Event and Result return independent snapshots;
@@ -36,12 +46,22 @@ remains cleanup unknown. Close is idempotent and safe concurrently with a blocke
 Next; Client.Close releases its children and rejects new operations. The client
 does not signal the shared daemon or independently stop persistent work.
 
-Per-record output and final content have separate 64 MiB defaults; stderr retains a
-64 KiB tail and queues hold 16 records. Overflow is an error, not truncation. Slow
-consumers exert backpressure. During cancellation, abandoned queues are released
-at the grace boundary; no cleanup success is inferred from a killed child.
-Windows builds, but equivalent native graceful cleanup is not yet supported or
-verified. This baseline does not claim durable session/turn APIs or publication.
+Per-record output and final content have separate 64 MiB defaults; stderr retains
+a 64 KiB tail and queues hold 16 records. Slow open consumers exert backpressure
+without internal silent drops. Cancellation switches the same stdout reader to
+an ordered shutdown spool, so unread RunStream.Close or Client.Close can let the
+CLI perform owned cleanup. Already queued records precede spooled records; later
+Result can still read diagnostics and cleanup confirmation. MaxShutdownBytes is
+an independent retention budget, default 64 MiB when zero; negative is invalid.
+Each record charges its payload bytes plus 64 bytes for metadata, bounding many
+tiny records too. Overflow reports output_limit and continues draining without
+retaining the remaining output for physical cleanup; missing terminal confirmation
+stays unknown. ShutdownGrace remains ten seconds by default, above the CLI's
+five-second owned Stop bound. No force-killed child implies cleanup success.
+
+Linux real-daemon behavior is tested separately from native macOS lifecycle
+certification. Windows builds but equivalent native graceful cleanup remains
+unsupported/unverified. This local candidate does not claim publication.
 
 ## Persistent handles
 
@@ -111,3 +131,73 @@ retention or a disappearing cut returns `result_unavailable`; recovery returns
 sequence integers, typed entries, copied raw entries and the copied full raw page.
 Cursors belong to their original scope; no attach redirect reuses one for another
 session. A page or marker does not establish complete historical replay.
+
+## Rich events and observations
+
+Event preserves copied RawRecord and RawPayload for the original protobuf
+wrapper. Typed helpers cover completion, delta, tool call/result, approval,
+acceptance, marker, backfill, history page and drop count. Reasoning and plan-exit
+notices remain distinct from assistant content and real approval requests. Unknown
+variants and enum values stay raw and never become successful completion evidence.
+Positive durable sequences are exact integers; zero is unsequenced (nil pointer).
+Repeated markers and zero/gapped sequences are not deduplication keys. Drop counts
+report ephemeral loss; a marker or high-water value cannot establish full replay.
+
+Session.Attach and Client.Observe return EventStream, which has Next/Event/Err/
+Close and intentionally no Result because it spans turns. Construction validates
+one first packet and preserves it for the first Next; establishment ends before
+returning, independent of delayed consumption. Stream lifetime then comes only
+from the caller context. Use one Next consumer; Close is safe concurrently and
+only detaches. It never sends approval, CancelTurn or StopSession.
+
+Attach exposes requested and actual observed identities without changing the
+Session handle. A retained handle can observe a successor. OpenSession remains
+strict: reopening an old reference after server resolution moves to a successor
+returns scope_mismatch, rather than silently rebinding. A nonzero FromSequence
+belongs to the original session; a redirect returns scope_mismatch with observed
+identity so the caller can explicitly reopen the observed session and reset its
+cursor. No reconnect, cursor migration or mutation replay is automatic.
+
+Finite Observe with zero Tail uses 20; Follow with zero Tail skips recent history.
+Cursor applies to a positive history tail and remains opaque. History has copied
+raw entries/page plus NextCursor/HasMore; fetch subsequent pages explicitly.
+Observe follow receives the daemon HELLO even for an idle camp, and unexpected EOF
+of an open stream is incomplete_stream. See examples/observe for explicit history
+pagination and a caller-controlled attach/reconnect cursor.
+
+## Explicit controls
+
+`Session.PendingApprovals(ctx)` reads only that handle's exact camp/session and
+returns independent typed/raw snapshots with request/expiry timestamps. Snapshot
+and live `Event.Approval` identify a request by `(SessionRef, CallID)`; applications
+can collapse repeated observations by that identity, as the approvals example does.
+A plan-exit notice remains an activity, never an approval request.
+
+`Session.RespondApproval(ctx, ApprovalDecision{CallID: call, Approve: true, Reason:
+reason})` sends one explicit decision. Set `Approve: false` for denial. There is no
+policy callback or implicit affirmative default. Every acknowledgement frame must
+carry the exact requested call ID. Expired, resolved, stale and wrong-scope refusals
+retain their original CLI/daemon codes and raw details. If the caller cancels after
+submission or the acknowledgement is malformed/lost, `Error.DecisionIndeterminate`
+can be true. Inspect durable state; the SDK never retries a decision automatically.
+A timeout/canceled wire error retains the standard context cause through errors.Is.
+
+`Turn.Cancel(ctx)` targets the handle's original camp/session/turn; it does not pick
+a current turn or stop the session. `CancelResult.Status` is the raw acknowledged
+canonical status; `State` is optional because an older/current server may return
+only status. When present, the protojson state is scope-checked, preserves exact
+integers and retains its original raw object. An acknowledgement can precede
+physical provider exit. Cancellation at the existing pre-stream gate can report
+`TURN_FAILED`; after dispatch it can return `recovery_required` with an already
+recorded provider effect. Cancellation does not undo that effect or permit replay.
+Canceling an already completed turn returns its completed status.
+
+`Session.Stop(ctx)` issues one explicit target stop. The daemon retains its existing
+managed-child custody cleanup; independent sessions are not selected. Timeout or
+lost acknowledgement remains an error and may require authoritative readback.
+Closing a persistent observer/client or canceling Wait only detaches the caller;
+these explicit control methods are the paths that request cancellation/stop.
+
+The approvals example lists or watches without deciding. To act, supply both
+`--call CALL --decision approve` (or `deny`), with explicit camp/session IDs. No
+example infers a decision from tool name or from a plan-exit notice.

@@ -173,3 +173,25 @@ func TestCallerDeadlineNormalizesCLICanceled(t *testing.T) {
 		t.Fatalf("%+v %v", result, err)
 	}
 }
+
+func TestRichNestedAndOuterDiagnosticsShareRetentionBudget(t *testing.T) {
+	b := newResultBuilder("obey.session.run", 2, 0)
+	created := []byte(`{"protocol":"obey.session.run","version":2,"type":"session_created","campaign_id":"c","session_id":"s","payload_type":"local.v1.CreateSessionResponse","payload":{"session":{"id":"s","campaign_id":"c"}}}`)
+	nested := []byte(`{"protocol":"obey.session.run","version":2,"type":"event","campaign_id":"c","session_id":"s","turn_id":"t","payload_type":"local.v1.SendMessageResponse","payload":{"event":{"session_id":"s","turn_id":"t","type":"AGENT_ERROR","error":{"code":42,"message":"small nested diagnostic"}}}}`)
+	outer := []byte(`{"protocol":"obey.session.run","version":2,"type":"error","campaign_id":"c","session_id":"s","turn_id":"t","code":"notice","severity":"warning","message":"small outer diagnostic"}`)
+	b.decoder.MaxDiagnosticBytes = int64(len(nested)*2 + len(outer) - 1)
+	for _, record := range [][]byte{created, nested, outer} {
+		if _, err := b.add(record); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, err := b.add(nested)
+	if err == nil {
+		t.Fatal("retained nested diagnostics bypassed cumulative limit")
+	}
+	result, err := b.finish(execclient.Outcome{ExitCode: 1}, err)
+	var typed *Error
+	if !errors.As(err, &typed) || typed.Code != "output_limit" || len(result.Diagnostics) != 2 {
+		t.Fatalf("diagnostics%d error%+v", len(result.Diagnostics), err)
+	}
+}

@@ -5,7 +5,7 @@
   "schema_valid": true,
   "exit_code": 0,
   "expected": "success",
-  "notes": "Successful durable state corroborates matching completion; no summary family.",
+  "notes": "Successful durable state corroborates matching completion; no summary family. Explicit scoped completed state/attempt1 corroborates matching live completion; normative expectation, not capture.",
   "records": [
     {
       "protocol": "obey.session.run",
@@ -59,6 +59,29 @@
       },
       "session_id": "s1",
       "campaign_id": "c1",
+      "turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "event",
+      "payload_type": "local.v1.GetTurnResponse",
+      "payload": {
+        "turn": {
+          "id": "t1",
+          "session_id": "s1",
+          "campaign_id": "c1",
+          "status": "TURN_COMPLETED",
+          "latest_attempt": {
+            "id": "attempt1",
+            "turn_id": "t1",
+            "attempt_number": "1",
+            "state": "TURN_ATTEMPT_COMPLETED"
+          }
+        }
+      },
+      "campaign_id": "c1",
+      "session_id": "s1",
       "turn_id": "t1"
     },
     {

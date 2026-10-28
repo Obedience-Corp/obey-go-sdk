@@ -63,6 +63,19 @@ func TestProcessHelper(t *testing.T) {
 		signal.Ignore(syscall.SIGTERM)
 		fmt.Fprintln(os.Stdout, "ready")
 		time.Sleep(time.Minute)
+	case "shutdown-order", "shutdown-tiny":
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, syscall.SIGTERM)
+		for i := 0; i < 257; i++ {
+			if mode == "shutdown-tiny" {
+				fmt.Fprintln(os.Stdout)
+			} else {
+				fmt.Fprintf(os.Stdout, "%d:%s\n", i, strings.Repeat("x", 4096))
+			}
+		}
+		<-ch
+		fmt.Fprintln(os.Stdout, "terminal")
+		fmt.Fprintln(os.Stderr, "shutdown-cleanup-ack")
 	case "grace":
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, syscall.SIGTERM)
@@ -237,5 +250,59 @@ func TestProcessDefaultRecordLimit(t *testing.T) {
 	_, p := startHelper(t, "huge", Limits{ShutdownGrace: 100 * time.Millisecond}, "")
 	if out := p.Wait(); !errors.Is(out.Err, ErrOutputLimit) {
 		t.Fatal(out)
+	}
+}
+
+func TestProcessUnreadShutdownSpoolOrderAndLimits(t *testing.T) {
+	for _, tc := range []struct {
+		mode    string
+		budget  int64
+		limited bool
+	}{{"shutdown-order", 0, false}, {"shutdown-order", 512, true}, {"shutdown-tiny", 128, true}} {
+		t.Run(fmt.Sprint(tc.mode, tc.budget), func(t *testing.T) {
+			_, p := startHelper(t, tc.mode, Limits{EventQueueSize: 1, MaxRecordBytes: 8192, MaxShutdownBytes: tc.budget, ShutdownGrace: 3 * time.Second}, "")
+			ready := time.Now().Add(3 * time.Second)
+			for len(p.records) != 1 && time.Now().Before(ready) {
+				time.Sleep(time.Millisecond)
+			}
+			if len(p.records) != 1 {
+				t.Fatal("queue did not fill before Close")
+			}
+			if err := p.Close(); err != nil {
+				t.Fatal(err)
+			}
+			out := p.Wait()
+			if out.ExitCode != 0 || !strings.Contains(out.StderrTail, "shutdown-cleanup-ack") || !errors.Is(out.Err, context.Canceled) {
+				t.Fatalf("cleanup/causes=%+v", out)
+			}
+			if errors.Is(out.Err, ErrOutputLimit) != tc.limited {
+				t.Fatalf("limit outcome=%+v", out)
+			}
+			records := 0
+			terminal := false
+			for {
+				record, err := p.DrainNext()
+				if err != nil {
+					break
+				}
+				if string(record) == "terminal" {
+					terminal = true
+					continue
+				}
+				if tc.mode == "shutdown-order" {
+					prefix := fmt.Sprintf("%d:", records)
+					if !strings.HasPrefix(string(record), prefix) {
+						t.Fatalf("order%d got%s", records, record)
+					}
+				}
+				records++
+			}
+			if !tc.limited && (records != 257 || !terminal) {
+				t.Fatalf("lost shutdown records%d terminal%v", records, terminal)
+			}
+			if tc.limited && (p.shutdownBytes > tc.budget || int64(len(p.shutdownRecords)) > tc.budget/shutdownRecordOverhead) {
+				t.Fatalf("shutdown bound bytes%d records%d", p.shutdownBytes, len(p.shutdownRecords))
+			}
+		})
 	}
 }

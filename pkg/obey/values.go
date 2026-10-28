@@ -58,11 +58,14 @@ const (
 )
 
 type Limits struct {
-	MaxRecordBytes  int64
-	MaxResultBytes  int64
-	StderrTailBytes int
-	EventQueueSize  int
-	ShutdownGrace   time.Duration
+	// MaxShutdownBytes bounds cancellation-only retained records: payload bytes
+	// plus 64 bytes per record. Zero defaults to 64 MiB; negative is invalid.
+	MaxShutdownBytes int64
+	MaxRecordBytes   int64
+	MaxResultBytes   int64
+	StderrTailBytes  int
+	EventQueueSize   int
+	ShutdownGrace    time.Duration
 }
 
 // Defaults: 64MiB record/result, 64KiB stderr, queue16, shutdown10s. Zero applies default; negative invalid.
@@ -171,26 +174,44 @@ const (
 	EventDrop           EventKind = "drop"
 )
 
+type ActivityHistoryEvent struct {
+	ID                                                                     string
+	Session                                                                SessionRef
+	GroupID                                                                string
+	Sequence                                                               uint64
+	Kind, Message, ActivityType, OldStatus, NewStatus, Metadata, Timestamp string
+	Raw                                                                    json.RawMessage
+}
+type ActivityHistoryPage struct {
+	Entries    []ActivityHistoryEvent
+	NextCursor string
+	HasMore    bool
+	Raw        json.RawMessage
+}
 type Event struct {
-	Kind                  EventKind
-	Protocol              ProtocolVersion
-	PayloadType           string
-	Session               SessionRef
-	RequestedSessionID    string
-	TurnID                string
-	DurableSequence       *uint64
-	RawRecord, RawPayload json.RawMessage
-	Completion            *Completion
-	Delta                 *MessageDelta
-	ToolCall              *ToolCall
-	ToolResult            *ToolResult
-	Approval              *Approval
-	Receipt               *Acceptance
-	Marker                *AttachMarker
-	Backfill              *TranscriptEntry
-	DroppedCount          *int64
-	Diagnostic            *Diagnostic
-	Terminal              *Terminal
+	ObservedSessionID, TargetTurnID, CallID, OutputSource, OutputFidelity string
+	DecisionIndeterminate                                                 bool
+	HighWaterSequence                                                     *uint64
+	History                                                               *ActivityHistoryPage
+	Kind                                                                  EventKind
+	Protocol                                                              ProtocolVersion
+	PayloadType                                                           string
+	Session                                                               SessionRef
+	RequestedSessionID                                                    string
+	TurnID                                                                string
+	DurableSequence                                                       *uint64
+	RawRecord, RawPayload                                                 json.RawMessage
+	Completion                                                            *Completion
+	Delta                                                                 *MessageDelta
+	ToolCall                                                              *ToolCall
+	ToolResult                                                            *ToolResult
+	Approval                                                              *Approval
+	Receipt                                                               *Acceptance
+	Marker                                                                *AttachMarker
+	Backfill                                                              *TranscriptEntry
+	DroppedCount                                                          *int64
+	Diagnostic                                                            *Diagnostic
+	Terminal                                                              *Terminal
 }
 type Completion struct {
 	Text, Model, StopReason string
@@ -202,8 +223,8 @@ type MessageDelta struct {
 }
 type ToolCall struct{ CallID, Name, Arguments string }
 type ToolResult struct {
-	CallID, Content string
-	Success         *bool
+	CallID, Content, Error string
+	Success                *bool
 }
 type Terminal struct {
 	Status, Outcome string
@@ -221,6 +242,7 @@ type ApprovalDecision struct {
 	Reason  string
 }
 type AttachMarker struct {
+	Type              string
 	HighWaterSequence uint64
 	CurrentTurnID     string
 	CurrentTurnStatus TurnStatus
@@ -256,8 +278,8 @@ type TranscriptPage struct {
 	HasMore    bool
 }
 type CancelResult struct {
-	Status TurnStatus
-	State  *TurnState
+	Status TurnStatus // Acknowledged disposition; physical exit may follow.
+	State  *TurnState // Optional scope-checked protojson snapshot, if supplied.
 }
 type Capabilities struct {
 	Schema        string

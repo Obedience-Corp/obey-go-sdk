@@ -53,9 +53,9 @@
     "turn_historical_unknown.json": "b3e14819bd8d5d71d48a0f45837ff1fb2eb00959a46f658bfe23624e0b633957",
     "turn_queued.json": "fd4b117b3842129826cd378684020d35e4740764112f0cd713590a44704e1662",
     "turn_recovery_required.json": "4361a20e45622b28276522627aff21f838fbbed57d236a71f0e4f65630ec7e8b",
-    "unknown_enum.json": "c13f60938abf97f1798f79fd4bc70541ebb5966a74134d6d83f9e350dd88083e",
+    "unknown_enum.json": "3f92ed5357b3f8f057f9e58e17a31b830f4d53e5b3583a73274a1fb45442d7cd",
     "unknown_protocol_version.json": "bde147484706726e8834ef7b7ab85363524b592d2658e6d334ae6b599620412f",
-    "unknown_raw_payload.json": "0f79fe7d0e4bbba6965738800068c97cefcca67592612e0ca0c3839efc5b5d23",
+    "unknown_raw_payload.json": "9fcba8434845223ec84fb7b474e121e9b15dfed7b5bf186f8bf6d959071a2bb7",
     "unknown_terminal_status.json": "40ed9674e6a18e3a91f876f71659d75bfb5cb610a68c129a50197de2b0589e0b",
     "v1_approval.json": "cb2b598089781252719dc9dc79f61abd52762faed9573b9da3a5856655c9f225",
     "v1_canceled.json": "0d137658e9c0d936612b7d30bdefba249a59eb57d08ba55187cb5f023eb3b7e2",
@@ -66,8 +66,8 @@
     "v1_timeout.json": "009f684c7b6b81fe8e9cda5e78b46ca225021aa5a297f7661504e8c2e75cd682",
     "v1_validation.json": "58d0298f26555fab0639d4d3af3d42aab9758668f1b77b7c8c1b97e5e6c5674f",
     "v2_approval_required.json": "48e620d54d5e04f44e6c3396409ca42d64d1510bcad31230b5ca65dd2a411608",
-    "v2_cleanup_warning.json": "8819b29cb3aea157f8be9c1fa487e83f7033483a3f5c9363e97ba68bb43d6dbd",
-    "v2_completed.json": "a0f784c7c6b178d0f815dea722be0ffb4301377ca37d3415680770295900f14a",
+    "v2_cleanup_warning.json": "0e49a1bebd0cc4fe95af39a8f6049418cde6aba9a89a8aca08896d6ae53d6474",
+    "v2_completed.json": "a41d0673656950f8f2e68b3ad800896901693a6b9688a11a07e1c589e6e67725",
     "v2_daemon_failure.json": "a8b894f848de6366b3ded6e96bf1c3024e92dcb29e523b6455c51bb606869170",
     "v2_owned_cancellation.json": "55a751fe8f249779b71de11d24b0aad1b35269738dd26ac15c05d93b9acbb0b7"
   }

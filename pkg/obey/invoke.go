@@ -157,10 +157,10 @@ func scopeError(err error, ref TurnRef) error {
 	return &copy
 }
 
-func (c *Client) machineDocument(ctx context.Context, args []string, operation, name string, ref TurnRef) ([]protocol.Envelope, error) {
-	return c.machineDocumentInput(ctx, args, nil, operation, name, ref)
+func (c *Client) machineDocument(ctx context.Context, args []string, operation, name string, ref TurnRef, expectedCall ...string) ([]protocol.Envelope, error) {
+	return c.machineDocumentInput(ctx, args, nil, operation, name, ref, expectedCall...)
 }
-func (c *Client) machineDocumentInput(ctx context.Context, args []string, stdin io.Reader, operation, name string, ref TurnRef) ([]protocol.Envelope, error) {
+func (c *Client) machineDocumentInput(ctx context.Context, args []string, stdin io.Reader, operation, name string, ref TurnRef, expectedCall ...string) ([]protocol.Envelope, error) {
 	bounded, cancel := context.WithTimeout(ctx, unaryTimeout)
 	defer cancel()
 	process, err := c.start(bounded, args, stdin)
@@ -186,7 +186,12 @@ func (c *Client) machineDocumentInput(ctx context.Context, args []string, stdin 
 		if parseErr != nil {
 			continue
 		} // Still drain shutdown, with one sole consumer.
-		record, err := decoder.Add(raw)
+		record, err := decoder.AddWithValidation(raw, func(record protocol.Envelope) (int64, error) {
+			if len(expectedCall) != 0 && record.CallID != expectedCall[0] {
+				return 0, &protocol.Error{Code: "scope_mismatch", Cause: errors.New("approval frame lacks the exact requested call ID")}
+			}
+			return 0, nil
+		})
 		if err != nil {
 			parseErr = err
 			invalidRaw = append(json.RawMessage(nil), raw...)

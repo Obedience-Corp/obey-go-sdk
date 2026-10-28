@@ -2,7 +2,6 @@ package obey
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"sync"
@@ -54,7 +53,7 @@ func (s *RunStream) Next() bool {
 		}
 		return false
 	}
-	r, err := s.builder.add(record)
+	_, err = s.builder.add(record)
 	if err != nil {
 		s.parseErr = err
 		s.exhausted = true
@@ -64,7 +63,7 @@ func (s *RunStream) Next() bool {
 		s.mu.Unlock()
 		return false
 	}
-	event := s.project(r)
+	event := cloneEvent(s.builder.event)
 	s.mu.Lock()
 	s.event = event
 	s.mu.Unlock()
@@ -107,30 +106,12 @@ func (s *RunStream) complete(out execclient.Outcome) {
 	s.mu.Unlock()
 }
 func (s *RunStream) Close() error { return s.process.Close() }
-func (s *RunStream) project(r protocol.Envelope) Event {
-	e := Event{Kind: EventUnknown, Protocol: s.builder.result.Protocol, PayloadType: r.PayloadType, Session: s.builder.result.Session, TurnID: s.builder.result.TurnID, RequestedSessionID: r.RequestedSessionID, RawRecord: append(json.RawMessage(nil), r.Raw...), RawPayload: append(json.RawMessage(nil), r.Payload...)}
-	switch r.Type {
-	case "session_created":
-		e.Kind = EventSessionCreated
-	case "assistant_content":
-		e.Kind = EventCompletion
-		if r.Content != nil {
-			e.Completion = &Completion{Text: *r.Content}
-		}
-	case "usage":
-		e.Kind = EventActivity
-	case "error":
-		e.Kind = EventError
-		e.Diagnostic = &Diagnostic{Code: r.Code, Message: r.Message, Severity: r.Severity, DaemonCode: ptrCopy(r.DaemonCode), Details: append(json.RawMessage(nil), r.Details...)}
-	case "terminal":
-		e.Kind = EventTerminal
-		e.Terminal = &Terminal{Status: r.Status, Outcome: r.Outcome, Cleanup: s.builder.result.Cleanup}
-	}
-	return e
-}
-
 func (s *RunStream) publicError(err error) *Error {
 	code := "protocol_error"
+	var public *Error
+	if errors.As(err, &public) {
+		code = public.Code
+	}
 	var pe *protocol.Error
 	if errors.As(err, &pe) {
 		code = pe.Code
@@ -141,7 +122,7 @@ func (s *RunStream) publicError(err error) *Error {
 	} else if errors.Is(err, context.Canceled) {
 		code = "canceled"
 	}
-	return &Error{Code: code, Operation: s.builder.decoder.Protocol, Protocol: s.builder.result.Protocol, Session: s.builder.result.Session, TurnID: s.builder.result.TurnID, IdempotencyKey: s.builder.decoder.IdempotencyKey, ClientRef: s.builder.decoder.ClientRef, Cause: err}
+	return &Error{RawRecord: append([]byte(nil), s.builder.failedRaw...), RequestedSessionID: s.builder.event.RequestedSessionID, ObservedSessionID: s.builder.event.ObservedSessionID, TargetTurnID: s.builder.event.TargetTurnID, CallID: s.builder.event.CallID, DecisionIndeterminate: s.builder.event.DecisionIndeterminate, Code: code, Operation: s.builder.decoder.Protocol, Protocol: s.builder.result.Protocol, Session: s.builder.result.Session, TurnID: s.builder.result.TurnID, IdempotencyKey: s.builder.decoder.IdempotencyKey, ClientRef: s.builder.decoder.ClientRef, Cause: err}
 }
 
 func (s *RunStream) drain() {
@@ -153,7 +134,7 @@ func (s *RunStream) drain() {
 		if s.parseErr != nil {
 			// After a protocol failure, retain only matching cleanup confirmation;
 			// no later content or terminal can turn the failed inference into success.
-			if r, e := protocol.Decode(record, s.builder.decoder.Protocol, s.builder.decoder.Version); e == nil && r.Type == "terminal" && r.SessionID == s.builder.result.Session.SessionID && r.Cleanup != "" {
+			if r, e := protocol.Decode(record, s.builder.decoder.Protocol, s.builder.decoder.Version); e == nil && r.Type == "terminal" && s.builder.result.Session.SessionID != "" && r.SessionID == s.builder.result.Session.SessionID && (s.builder.result.Session.CampID == "" || r.CampID == s.builder.result.Session.CampID) && (s.builder.result.TurnID == "" || r.TurnID == s.builder.result.TurnID) && r.Cleanup != "" {
 				s.builder.result.Cleanup = CleanupDisposition(r.Cleanup)
 			}
 			continue

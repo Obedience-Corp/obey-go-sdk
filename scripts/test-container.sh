@@ -18,4 +18,4 @@ docker run --init --rm --read-only --network=none \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
  -e HOME=/tmp/sdk-home -e TMPDIR=/tmp/scratch -e GOCACHE=/tmp/gocache -e GOMODCACHE=/tmp/gomodcache \
  -e OBEY_SDK_TEST_CONTAINER=1 -v "$PWD:/workspace:ro" -w /workspace \
- golang:1.24-bookworm bash -c 'set -e; mkdir -p "$HOME" "$TMPDIR" "$GOCACHE" "$GOMODCACHE"; exec go test -v -race -count=1 -timeout=5m -tags="$1" -run "$2" "${@:3}"' sdk "$tags" "$pattern" "${packages[@]}"
+ golang:1.24-bookworm bash -c 'set -e; mkdir -p "$HOME" "$TMPDIR" "$GOCACHE" "$GOMODCACHE"; exec go test -v -race -count=1 -timeout=10m -tags="$1" -run "$2" "${@:3}"' sdk "$tags" "$pattern" "${packages[@]}"

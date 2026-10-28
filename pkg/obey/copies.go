@@ -67,6 +67,16 @@ func cloneTranscript(t TranscriptEntry) TranscriptEntry {
 	return t
 }
 func cloneEvent(e Event) Event {
+	e.HighWaterSequence = ptrCopy(e.HighWaterSequence)
+	e.History = ptrCopy(e.History)
+	if e.History != nil {
+		e.History.Raw = append(json.RawMessage(nil), e.History.Raw...)
+		e.History.Entries = append([]ActivityHistoryEvent(nil), e.History.Entries...)
+		for i := range e.History.Entries {
+			e.History.Entries[i].Raw = append(json.RawMessage(nil), e.History.Entries[i].Raw...)
+		}
+	}
+
 	e.RawRecord = append(json.RawMessage(nil), e.RawRecord...)
 	e.RawPayload = append(json.RawMessage(nil), e.RawPayload...)
 	e.DurableSequence = ptrCopy(e.DurableSequence)

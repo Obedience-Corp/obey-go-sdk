@@ -11,9 +11,11 @@ import (
 )
 
 type resultBuilder struct {
-	decoder  protocol.Decoder
-	result   Result
-	maxBytes int64
+	failedRaw json.RawMessage
+	event     Event
+	decoder   protocol.Decoder
+	result    Result
+	maxBytes  int64
 }
 
 func newResultBuilder(name string, version int, maxBytes int64) *resultBuilder {
@@ -23,10 +25,23 @@ func newResultBuilder(name string, version int, maxBytes int64) *resultBuilder {
 	return &resultBuilder{decoder: protocol.Decoder{Protocol: name, Version: version}, result: Result{Protocol: ProtocolVersion{Name: name, Version: version}, Cleanup: CleanupUnknown}, maxBytes: maxBytes}
 }
 func (b *resultBuilder) add(data []byte) (protocol.Envelope, error) {
-	r, err := b.decoder.Add(data)
+	var event Event
+	r, err := b.decoder.AddWithValidation(data, func(record protocol.Envelope) (int64, error) {
+		var err error
+		event, err = projectRecord(record)
+		if err != nil {
+			return 0, err
+		}
+		if record.Type == "event" && event.Diagnostic != nil {
+			return int64(len(record.Raw)), nil
+		}
+		return 0, nil
+	})
 	if err != nil {
+		b.failedRaw = append(json.RawMessage(nil), data...)
 		return r, err
 	}
+	b.event = event
 	b.result.Session = SessionRef{CampID: b.decoder.CampID, SessionID: b.decoder.SessionID}
 	b.result.TurnID = b.decoder.TurnID
 	switch r.Type {
@@ -51,38 +66,15 @@ func (b *resultBuilder) add(data []byte) (protocol.Envelope, error) {
 			b.result.Usage.Latency = time.Duration(*r.LatencyMS) * time.Millisecond
 		}
 	case "event":
-		if r.PayloadType == "local.v1.SendMessageResponse" {
-			var wrapper struct {
-				Event struct {
-					Type       json.RawMessage `json:"type"`
-					Completion *struct {
-						Content    string            `json:"content"`
-						Model      string            `json:"model"`
-						StopReason string            `json:"stop_reason"`
-						Input      protocol.Integer  `json:"tokens_input"`
-						Output     protocol.Integer  `json:"tokens_output"`
-						Cached     protocol.Integer  `json:"cached_tokens"`
-						Latency    protocol.Integer  `json:"latency_ms"`
-						Cost       *protocol.Integer `json:"total_cost_usd_ticks"`
-						Partial    *bool             `json:"cost_is_partial"`
-					} `json:"completion"`
-				} `json:"event"`
+		if event.Completion != nil {
+			if int64(len(event.Completion.Text)) > b.maxBytes {
+				return r, &protocol.Error{Code: "output_limit"}
 			}
-			if err := json.Unmarshal(r.Payload, &wrapper); err != nil {
-				return r, &protocol.Error{Code: "protocol_error", Cause: err}
-			}
-			c := wrapper.Event.Completion
-			if c != nil && string(wrapper.Event.Type) == `"AGENT_COMPLETION"` {
-				if int64(len(c.Content)) > b.maxBytes {
-					return r, &protocol.Error{Code: "output_limit"}
-				}
-				b.result.Text = c.Content
-				b.result.Usage = Usage{InputTokens: int64(c.Input), OutputTokens: int64(c.Output), CachedTokens: int64(c.Cached), Latency: time.Duration(c.Latency) * time.Millisecond, CostIsPartial: c.Partial}
-				if c.Cost != nil {
-					v := int64(*c.Cost)
-					b.result.Usage.CostUSDTicks = &v
-				}
-			}
+			b.result.Text = event.Completion.Text
+			b.result.Usage = cloneUsage(event.Completion.Usage)
+		}
+		if event.Diagnostic != nil {
+			b.result.Diagnostics = append(b.result.Diagnostics, cloneDiagnostic(*event.Diagnostic))
 		}
 	case "error":
 		if r.Severity == "" {
@@ -115,6 +107,10 @@ func (b *resultBuilder) finish(out execclient.Outcome, parseErr error) (*Result,
 		return &b.result, nil
 	}
 	code := "protocol_error"
+	var public *Error
+	if errors.As(err, &public) {
+		code = public.Code
+	}
 	var pe *protocol.Error
 	if errors.As(err, &pe) {
 		code = pe.Code
@@ -135,6 +131,12 @@ func (b *resultBuilder) finish(out execclient.Outcome, parseErr error) (*Result,
 	resultErr := &Error{Code: code, IdempotencyKey: b.decoder.IdempotencyKey, ClientRef: b.decoder.ClientRef, Operation: b.decoder.Protocol, Protocol: b.result.Protocol, Session: b.result.Session, TurnID: b.result.TurnID, ExitCode: &out.ExitCode, StderrTail: out.StderrTail, Diagnostics: append([]Diagnostic(nil), b.result.Diagnostics...), Cause: errors.Join(err, out.Err)}
 	if pe != nil && pe.Record != nil {
 		r := pe.Record
+		resultErr.RawRecord = append(json.RawMessage(nil), r.Raw...)
+		resultErr.RequestedSessionID = r.RequestedSessionID
+		resultErr.ObservedSessionID = r.ObservedSessionID
+		resultErr.TargetTurnID = r.TargetTurnID
+		resultErr.CallID = r.CallID
+		resultErr.DecisionIndeterminate = r.DecisionIndeterminate
 		resultErr.DaemonCode = r.DaemonCode
 		resultErr.GRPCCode = r.GRPCCode
 		resultErr.Details = append(json.RawMessage(nil), r.Details...)
@@ -145,6 +147,15 @@ func (b *resultBuilder) finish(out execclient.Outcome, parseErr error) (*Result,
 			resultErr.ClientRef = r.ClientRef
 		}
 		resultErr.AcceptanceIndeterminate = r.AcceptanceIndeterminate
+	}
+	if code == "timeout" {
+		resultErr.Cause = errors.Join(resultErr.Cause, context.DeadlineExceeded)
+	}
+	if code == "canceled" {
+		resultErr.Cause = errors.Join(resultErr.Cause, context.Canceled)
+	}
+	if len(b.failedRaw) > 0 {
+		resultErr.RawRecord = append(json.RawMessage(nil), b.failedRaw...)
 	}
 	if code == "indeterminate_acceptance" {
 		resultErr.AcceptanceIndeterminate = true

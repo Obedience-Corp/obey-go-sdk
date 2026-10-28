@@ -55,7 +55,7 @@ func NewClient(binaryPath string, options ...ClientOption) (*Client, error) {
 	if err := validateConfig(cfg.defaults.Config); err != nil {
 		return nil, &Error{Code: "invalid_options", Operation: "construct", Cause: err}
 	}
-	runner, err := execclient.New(path, execclient.Limits{MaxRecordBytes: cfg.limits.MaxRecordBytes, MaxResultBytes: cfg.limits.MaxResultBytes, StderrTailBytes: cfg.limits.StderrTailBytes, EventQueueSize: cfg.limits.EventQueueSize, ShutdownGrace: cfg.limits.ShutdownGrace})
+	runner, err := execclient.New(path, execclient.Limits{MaxShutdownBytes: cfg.limits.MaxShutdownBytes, MaxRecordBytes: cfg.limits.MaxRecordBytes, MaxResultBytes: cfg.limits.MaxResultBytes, StderrTailBytes: cfg.limits.StderrTailBytes, EventQueueSize: cfg.limits.EventQueueSize, ShutdownGrace: cfg.limits.ShutdownGrace})
 	if err != nil {
 		return nil, &Error{Code: "invalid_options", Operation: "construct", Cause: err}
 	}

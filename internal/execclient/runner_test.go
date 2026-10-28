@@ -77,3 +77,13 @@ func TestCleanExitAlwaysEOF(t *testing.T) {
 		}
 	}
 }
+
+func TestShutdownBudgetDefaultsAndNegative(t *testing.T) {
+	limits, err := (Limits{}).normalized()
+	if err != nil || limits.MaxShutdownBytes != DefaultBytes {
+		t.Fatalf("defaults=%+v %v", limits, err)
+	}
+	if _, err := (Limits{MaxShutdownBytes: -1}).normalized(); err == nil {
+		t.Fatal("negative shutdown budget accepted")
+	}
+}

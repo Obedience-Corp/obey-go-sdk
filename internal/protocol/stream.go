@@ -6,6 +6,10 @@ import (
 )
 
 type Decoder struct {
+	RequireAcceptance                                       bool
+	runApproval, runUnsuccessful, runActivity               bool
+	runStateCompleted                                       bool
+	activityError                                           bool
 	retained                                                retainedProof
 	Protocol                                                string
 	Version                                                 int
@@ -19,12 +23,25 @@ type Decoder struct {
 	diagnosticBytes                                         int64
 }
 
-func (d *Decoder) Add(data []byte) (Envelope, error) {
+func (d *Decoder) Add(data []byte) (Envelope, error) { return d.AddWithValidation(data, nil) }
+
+// AddWithValidation commits protocol scope only after the owning payload/scope
+// projection also succeeds. It avoids a second wire vocabulary or JSON decode.
+func (d *Decoder) AddWithValidation(data []byte, validate func(Envelope) (int64, error)) (Envelope, error) {
 	candidate := *d
 	candidate.payloads = maps.Clone(d.payloads)
 	record, err := candidate.add(data)
 	if err != nil {
 		return record, err
+	}
+	if validate != nil {
+		charge, err := validate(record)
+		if err != nil {
+			return record, err
+		}
+		if err := candidate.retainDiagnostic(charge); err != nil {
+			return record, err
+		}
 	}
 	*d = candidate
 	return record, nil
@@ -91,13 +108,8 @@ func (d *Decoder) add(data []byte) (Envelope, error) {
 		}
 		d.Usage = true
 	case "error":
-		limit := d.MaxDiagnosticBytes
-		if limit == 0 {
-			limit = 64 << 20
-		}
-		d.diagnosticBytes += int64(len(r.Raw))
-		if d.diagnosticBytes > limit {
-			return r, failure("output_limit", "diagnostic retention limit exceeded")
+		if err := d.retainDiagnostic(int64(len(r.Raw))); err != nil {
+			return r, err
 		}
 		d.Errors = append(d.Errors, r)
 	case "terminal":
@@ -122,6 +134,11 @@ func (d *Decoder) add(data []byte) (Envelope, error) {
 		case "local.v1.PingResponse", "local.v1.RespondApprovalResponse", "local.v1.StopSessionResponse", "local.v1.CancelTurnResponse", "local.v1.ListRecentActivityResponse":
 			d.payloads[r.PayloadType] = true
 		}
+		if d.Protocol == "obey.session.run" && d.Version == 2 && r.PayloadType == "local.v1.GetTurnResponse" {
+			if err := d.runState(r); err != nil {
+				return r, err
+			}
+		}
 		if d.Protocol == "obey.session.send" && d.Accepted && (r.PayloadType == "local.v1.GetTurnResponse" || r.PayloadType == "local.v1.ListSessionTranscriptResponse") {
 			if err := d.retainedEvent(r); err != nil {
 				return r, err
@@ -132,14 +149,17 @@ func (d *Decoder) add(data []byte) (Envelope, error) {
 		}
 		var p struct {
 			Accepted *struct {
-				TurnID string          `json:"turn_id"`
-				Status json.RawMessage `json:"status"`
+				TurnID        string          `json:"turn_id"`
+				Status        json.RawMessage `json:"status"`
+				QueuePosition uint32          `json:"queue_position"`
+				Deduplicated  bool            `json:"deduplicated"`
 			} `json:"accepted"`
 			Event *struct {
 				SessionID  string          `json:"session_id"`
 				TurnID     string          `json:"turn_id"`
 				Type       json.RawMessage `json:"type"`
 				Completion json.RawMessage `json:"completion"`
+				Finished   json.RawMessage `json:"turn_finished"`
 			} `json:"event"`
 		}
 		if err := json.Unmarshal(r.Payload, &p); err != nil {
@@ -153,12 +173,43 @@ func (d *Decoder) add(data []byte) (Envelope, error) {
 			default:
 				return r, failure("protocol_error", "unknown acceptance status")
 			}
+			if d.Protocol == "obey.session.run" && d.Version == 2 {
+				if d.Accepted || d.runActivity || p.Accepted.Deduplicated || (status != "TURN_QUEUED" && status != "TURN_RUNNING") {
+					return r, failure("protocol_error", "invalid fresh owned acceptance")
+				}
+				if p.Accepted.QueuePosition != 0 {
+					return r, failure("unexpected_queue", "owned receipt has queued predecessor")
+				}
+			}
 			if p.Accepted.TurnID == "" || !scope(&d.TurnID, p.Accepted.TurnID) {
 				return r, failure("protocol_error", "receipt identity mismatch")
 			}
 			d.Accepted = true
 		}
 		if p.Event != nil {
+			if d.Protocol == "obey.session.run" && d.Version == 2 {
+				if d.RequireAcceptance && !d.Accepted {
+					return r, failure("protocol_error", "advertised owned receipt missing before activity")
+				}
+				d.runActivity = true
+				switch string(p.Event.Type) {
+				case `"AGENT_APPROVAL_REQUEST"`:
+					d.runApproval = true
+				case `"AGENT_TURN_FINISHED"`:
+					var finished struct {
+						Status json.RawMessage `json:"status"`
+					}
+					if len(p.Event.Finished) == 0 || string(p.Event.Finished) == "null" || json.Unmarshal(p.Event.Finished, &finished) != nil {
+						return r, failure("protocol_error", "finished activity lacks valid payload")
+					}
+					if string(finished.Status) != `"TURN_COMPLETED"` {
+						d.runUnsuccessful = true
+					}
+				}
+			}
+			if string(p.Event.Type) == `"AGENT_ERROR"` {
+				d.activityError = true
+			}
 			if !scope(&d.SessionID, p.Event.SessionID) || !scope(&d.TurnID, p.Event.TurnID) {
 				return r, failure("protocol_error", "event identity mismatch")
 			}
@@ -209,7 +260,16 @@ func (d *Decoder) Finish(exit int) error {
 		}
 		switch d.Protocol {
 		case "obey.session.run":
-			if !d.Created || !d.Completion || (d.Version == 1 && !d.Usage) || (d.Version == 2 && (d.TurnID == "" || d.Last.Outcome != "turn_completed")) {
+			if d.Version == 2 && d.runApproval {
+				return failure("approval_required", "owned run cannot answer approval requests")
+			}
+			if d.Version == 2 && d.runUnsuccessful {
+				return failure("daemon_error", "owned turn finished without completion")
+			}
+			if d.activityError {
+				return failure("daemon_error", "run completion contradicts an error activity")
+			}
+			if !d.Created || !d.Completion || (d.Version == 1 && !d.Usage) || (d.Version == 2 && (d.TurnID == "" || d.Last.Outcome != "turn_completed" || !d.runStateCompleted || (d.RequireAcceptance && !d.Accepted))) {
 				return failure("protocol_error", "run completion evidence missing")
 			}
 		case "obey.session.create":
@@ -254,4 +314,16 @@ func (d *Decoder) Finish(exit int) error {
 		return failure("canceled", "observation detached")
 	}
 	return failure("daemon_error", "failed invocation")
+}
+
+func (d *Decoder) retainDiagnostic(bytes int64) error {
+	limit := d.MaxDiagnosticBytes
+	if limit == 0 {
+		limit = 64 << 20
+	}
+	if bytes < 0 || bytes > limit-d.diagnosticBytes {
+		return failure("output_limit", "diagnostic retention limit exceeded")
+	}
+	d.diagnosticBytes += bytes
+	return nil
 }

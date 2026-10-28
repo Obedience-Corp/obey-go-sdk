@@ -51,13 +51,17 @@ func New(binary string, limits Limits) (*Runner, error) {
 }
 
 type Process struct {
-	cmd     *exec.Cmd
-	ctx     context.Context
-	cancel  context.CancelCauseFunc
-	records chan []byte
-	done    chan struct{}
-	mu      sync.Mutex
-	outcome Outcome
+	// Written only by the stdout reader; consumed only after records is closed.
+	shutdownRecords [][]byte
+	shutdownIndex   int
+	shutdownBytes   int64
+	cmd             *exec.Cmd
+	ctx             context.Context
+	cancel          context.CancelCauseFunc
+	records         chan []byte
+	done            chan struct{}
+	mu              sync.Mutex
+	outcome         Outcome
 }
 
 func mergedEnv(overrides []string) []string {
@@ -127,7 +131,6 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 	stderrDone := make(chan struct{})
 	go func() { defer close(stderrDone); _, _ = io.Copy(&tail, stderr) }()
 	stopWatcher := make(chan struct{})
-	forceDrainStop := make(chan struct{})
 	watcherDone := make(chan struct{})
 	go func() {
 		defer close(watcherDone)
@@ -139,7 +142,6 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 			select {
 			case <-stopWatcher:
 			case <-timer.C:
-				close(forceDrainStop)
 				_ = p.cmd.Process.Kill()
 				_ = stdout.Close()
 				_ = stderr.Close()
@@ -147,21 +149,28 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 		case <-stopWatcher:
 		}
 	}()
+	spooling := false
 	readErr := readRecords(stdout, r.limits, func(record []byte) error {
-		select {
-		case p.records <- record:
-			return nil
-		case <-p.ctx.Done():
-			// Preserve records during graceful shutdown so Result can drain
-			// the confirming terminal. The grace bound releases an abandoned queue.
+		if !spooling && p.ctx.Err() == nil {
 			select {
 			case p.records <- record:
 				return nil
-			case <-forceDrainStop:
-				return context.Cause(p.ctx)
+			case <-p.ctx.Done():
 			}
 		}
+		// After cancellation this same reader drains stdout so an unread caller
+		// cannot block the CLI's owned cleanup. Consumers retain queue-before-spool
+		// order; no competing consumer steals records from Next or Result.
+		spooling = true
+		remaining := r.limits.MaxShutdownBytes - p.shutdownBytes
+		if remaining < shutdownRecordOverhead || int64(len(record)) > remaining-shutdownRecordOverhead {
+			return ErrOutputLimit
+		}
+		p.shutdownBytes += int64(len(record)) + shutdownRecordOverhead
+		p.shutdownRecords = append(p.shutdownRecords, record)
+		return nil
 	})
+
 	if readErr != nil {
 		p.cancel(readErr)
 		_, _ = io.Copy(io.Discard, stdout)
@@ -222,7 +231,7 @@ func (p *Process) Next(ctx context.Context) ([]byte, error) {
 		if ok {
 			return record, nil
 		}
-		return nil, p.finalError()
+		return p.afterQueue()
 	case <-ctx.Done():
 		p.cancel(ctx.Err())
 		return nil, ctx.Err()
@@ -234,7 +243,7 @@ func (p *Process) Next(ctx context.Context) ([]byte, error) {
 			if ok {
 				return record, nil
 			}
-			return nil, p.finalError()
+			return p.afterQueue()
 		default:
 		}
 		return nil, context.Cause(p.ctx)
@@ -277,6 +286,22 @@ func (b *tailBuffer) Write(data []byte) (int, error) {
 }
 func (b *tailBuffer) String() string { return string(b.data) }
 
+// Charging metadata makes empty/tiny records bounded as well as payload bytes.
+const shutdownRecordOverhead int64 = 64
+
+func (p *Process) afterQueue() ([]byte, error) {
+	p.mu.Lock()
+	if p.shutdownIndex < len(p.shutdownRecords) {
+		record := p.shutdownRecords[p.shutdownIndex]
+		p.shutdownRecords[p.shutdownIndex] = nil
+		p.shutdownIndex++
+		p.mu.Unlock()
+		return record, nil
+	}
+	p.mu.Unlock()
+	return nil, p.finalError()
+}
+
 func (p *Process) finalError() error {
 	<-p.done
 	p.mu.Lock()
@@ -295,7 +320,7 @@ func (p *Process) DrainNext() ([]byte, error) {
 	if ok {
 		return record, nil
 	}
-	return nil, p.finalError()
+	return p.afterQueue()
 }
 
 // Cancel starts bounded shutdown without waiting; the stream owner continues

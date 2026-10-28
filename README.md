@@ -16,7 +16,7 @@ This repository is local and unpublished. Remote ownership, license selection,
 version tags and public module availability remain release prerequisites. No
 license or permission to publish is implied by this scaffold.
 
-The current candidate provides `RunPrompt`, final-only `StreamPrompt`, capability
+The current candidate provides `RunPrompt`, `StreamPrompt` with advertised live/final-only fidelity, capability
 discovery, copied options/results, typed failures and bounded child cleanup.
 Callers choose their provider/model explicitly:
 
@@ -35,5 +35,13 @@ and the basic, streaming and service examples. Persistent `CreateSession`,
 `Turn.Wait` and paginated `Session.Transcript` are available. Send returns durable
 acceptance; callers explicitly wait or inspect state. Persist your own submission
 key before Send for crash recovery, and retain partial handles and typed uncertainty
-on errors. Client closure detaches persistent work. Rich observation/controls and
-public release readiness remain under implementation in this local candidate.
+on errors. Client closure detaches persistent work. `Session.Attach` and `Client.Observe`
+expose typed/raw event wrappers with explicit scope and pagination. Explicit
+approval/cancel/stop and public release readiness remain under implementation in
+this local candidate. See `examples/observe` for caller-controlled reconnect.
+
+Persistent handles expose explicit `PendingApprovals`, `RespondApproval`,
+`Turn.Cancel` and `Session.Stop`. See [lifecycle and controls](docs/lifecycle.md)
+and [approval inspection/decisions](examples/approvals/main.go). Decision errors
+can be indeterminate; no mutation is retried automatically. Cancellation acknowledgements
+are separate from physical exit and do not reverse a recorded effect.

@@ -33,7 +33,7 @@ docker run --init --rm --read-only --network=none \
 docker run --init --rm --read-only --network host \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g \
  -e HOME=/tmp/home -e TMPDIR=/tmp/scratch -e GOCACHE=/tmp/obey-cache -e GOMODCACHE=/tmp/obey-modules \
- -e SDK_CONSUMER_SUITE="$consumer_suite" -e OBEY_MACHINE_TEST_CONTAINER=1 -e OBEY_SDK_TEST_CONTAINER=1 \
+ -e SDK_CONSUMER_SUITE="$consumer_suite" -e OBEY_SDK_CONSUMER_PATTERN="${OBEY_SDK_CONSUMER_PATTERN:-}" -e OBEY_MACHINE_TEST_CONTAINER=1 -e OBEY_SDK_TEST_CONTAINER=1 \
  -e SDK_CONSUMER_GO124=/evidence/consumer-go124 -e SDK_CONSUMER_CURRENT=/tmp/consumer-current \
  -e DOCKER_HOST=unix:///var/run/docker.sock -e TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock -e TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1 \
  -e GONOSUMDB='github.com/Obedience-Corp/*,github.com/lancekrogers/*' \

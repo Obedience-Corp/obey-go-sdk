@@ -63,17 +63,51 @@ func (c *Client) StreamPrompt(ctx context.Context, prompt string, options *RunOp
 	if err != nil {
 		return nil, err
 	}
-	if !supports(caps, "session_run", "obey.session.run", 1) {
+	version := 1
+	requireReceipt := false
+	if opts.Camp != "" && supports(caps, "session_run", "obey.session.run", 2) {
+		status, statusErr := c.Status(ctx)
+		if statusErr != nil {
+			var typed *Error
+			if !errors.As(statusErr, &typed) || typed.Code != "unsupported_protocol" {
+				return nil, statusErr
+			}
+		} else if status.Features["chat_surfaces"] && status.Features["durable_turns"] && status.Features["turn_identity"] {
+			version = 2
+			requireReceipt = status.Features["send_acceptance"]
+		}
+	}
+	if opts.RequireLiveEvents && version != 2 {
+		return nil, &Error{Code: "unsupported_capability", Operation: "run", Cause: errors.New("live run requires explicit camp and compatible CLI/daemon capabilities")}
+	}
+	if !supports(caps, "session_run", "obey.session.run", version) {
 		return nil, &Error{Code: "unsupported_protocol", Operation: "run"}
 	}
-	if opts.RequireLiveEvents {
-		return nil, &Error{Code: "unsupported_capability", Operation: "run", Cause: errors.New("run-v1 is final-only")}
+	if version == 2 {
+		if err := validateSendFiles(ctx, prompt, opts.Files, c.config.cwd); err != nil {
+			code := "invalid_input"
+			if errors.Is(err, context.Canceled) {
+				code = "canceled"
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+				code = "timeout"
+			}
+			return nil, &Error{Code: code, Operation: "run", Cause: err}
+		}
 	}
-	p, err := c.start(ctx, runArgs(opts), strings.NewReader(prompt))
+	args := runArgs(opts)
+	fidelity := FidelityFinalOnly
+	if version == 2 {
+		args = append(args, "--protocol-version", "2")
+		fidelity = FidelityLive
+	}
+	p, err := c.start(ctx, args, strings.NewReader(prompt))
 	if err != nil {
 		return nil, err
 	}
-	return &RunStream{process: p, ctx: ctx, builder: newResultBuilder("obey.session.run", 1, c.config.limits.MaxResultBytes), fidelity: FidelityFinalOnly}, nil
+	builder := newResultBuilder("obey.session.run", version, c.config.limits.MaxResultBytes)
+	builder.decoder.RequireAcceptance = requireReceipt
+	return &RunStream{process: p, ctx: ctx, builder: builder, fidelity: fidelity}, nil
 }
 func (c *Client) RunPrompt(ctx context.Context, prompt string, options *RunOptions) (*Result, error) {
 	s, err := c.StreamPrompt(ctx, prompt, options)

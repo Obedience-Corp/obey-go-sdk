@@ -17,4 +17,6 @@ cp "/sdk/tests/consumer/${SDK_CONSUMER_SUITE:-oneshot}/go.mod" "/sdk/tests/consu
 pattern='^TestMachineSDKConsumer'
 tags=integration,sdk_consumer_tests
 if [ "${SDK_CONSUMER_SUITE:-oneshot}" = persistent ]; then pattern='^TestMachineSDKHandles'; tags="$tags,machine_contract_tests"; fi
+if [ -n "${OBEY_SDK_CONSUMER_PATTERN:-}" ]; then pattern=$OBEY_SDK_CONSUMER_PATTERN; fi
+printf 'Consumer selector: %s\n' "$pattern"
 go test -v -race -mod=readonly -count=1 -timeout=10m -tags="$tags" -run "$pattern" ./tests/integration/daemon
