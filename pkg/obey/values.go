@@ -57,6 +57,8 @@ const (
 	FidelityLive      StreamFidelity = "live"
 )
 
+// Limits default to 64 MiB record/result/shutdown, 64 KiB stderr, queue 16 and shutdown 10s.
+// Zero selects the default; negative values are invalid.
 type Limits struct {
 	// MaxShutdownBytes bounds cancellation-only retained records: payload bytes
 	// plus 64 bytes per record. Zero defaults to 64 MiB; negative is invalid.
@@ -68,7 +70,6 @@ type Limits struct {
 	ShutdownGrace    time.Duration
 }
 
-// Defaults: 64MiB record/result, 64KiB stderr, queue16, shutdown10s. Zero applies default; negative invalid.
 type SessionOptions struct {
 	Provider, Model, Camp, WorkingDirectory, Agent, AgentProfile, Mode, ReasoningEffort, FestivalID, TaskID string
 	Config                                                                                                  json.RawMessage

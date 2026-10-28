@@ -101,7 +101,7 @@ func validateSendFiles(ctx context.Context, prompt string, files []string, cwd s
 			combined += size
 		}
 		if combined > maxSendBytes {
-			return errors.New("text and inline attachments exceed6 MiB daemon limit")
+			return errors.New("text and inline attachments exceed 6 MiB daemon limit")
 		}
 	}
 	return ctx.Err()

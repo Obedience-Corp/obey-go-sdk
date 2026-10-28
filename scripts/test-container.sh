@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-mode=${1:?expected process, consumer or durable}
+mode=${1:?expected process, consumer, durable, compatibility or service}
 case "$mode" in
  process) pattern=${OBEY_SDK_PROCESS_PATTERN:-'^TestProcess'}; tags=process_tests; packages=(./internal/execclient/... ./pkg/obey/...) ;;
  consumer) exec bash scripts/test-consumer.sh ;;
  compatibility) exec bash scripts/test-consumer.sh compatibility ;;
  durable) exec bash scripts/test-consumer.sh persistent ;;
- *) echo 'expected process, consumer or durable' >&2; exit 2 ;;
+ service) exec bash scripts/test-consumer.sh service ;;
+ *) echo 'expected process, consumer, durable, compatibility or service' >&2; exit 2 ;;
 esac
 if ! rg -l '^func TestProcess' internal/execclient pkg/obey >/dev/null; then
  echo 'process acceptance tests are not implemented yet; complete the bounded runner task' >&2; exit 1

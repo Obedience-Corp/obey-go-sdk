@@ -37,7 +37,7 @@ acceptance; callers explicitly wait or inspect state. Persist your own submissio
 key before Send for crash recovery, and retain partial handles and typed uncertainty
 on errors. Client closure detaches persistent work. `Session.Attach` and `Client.Observe`
 expose typed/raw event wrappers with explicit scope and pagination. Explicit
-approval/cancel/stop and public release readiness remain under implementation in
+approval/cancel/stop are available; public release readiness remains pending in
 this local candidate. See `examples/observe` for caller-controlled reconnect.
 
 Persistent handles expose explicit `PendingApprovals`, `RespondApproval`,
@@ -45,3 +45,7 @@ Persistent handles expose explicit `PendingApprovals`, `RespondApproval`,
 and [approval inspection/decisions](examples/approvals/main.go). Decision errors
 can be indeterminate; no mutation is retried automatically. Cancellation acknowledgements
 are separate from physical exit and do not reverse a recorded effect.
+
+The independent SDK-only HTTP fixture and registered journey are described in
+[service integration evidence](docs/integration-evidence.md). `just test service`
+proves journal-before-send, restart recovery and explicit controls in containers.

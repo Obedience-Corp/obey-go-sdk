@@ -5,7 +5,7 @@ sdk_root=$PWD
 consumer_suite=${1:-oneshot}
 compatibility=false
 if [ "$consumer_suite" = compatibility ]; then compatibility=true; consumer_suite=oneshot; export OBEY_SDK_CONSUMER_PATTERN='^TestMachineSDKConsumerLegacyArtifactPairing$'; fi
-case "$consumer_suite" in oneshot|persistent) ;; *) echo 'expected oneshot or persistent consumer suite' >&2; exit 2 ;; esac
+case "$consumer_suite" in oneshot|persistent|service) ;; *) echo 'expected oneshot, persistent or service consumer suite' >&2; exit 2 ;; esac
 sdk_revision=$(git rev-parse HEAD)
 sdk_dirty=false
 if [ -n "$(git status --porcelain)" ]; then sdk_dirty=true; fi
@@ -32,6 +32,10 @@ if [ "$compatibility" = true ]; then
   -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/cache -e GOMODCACHE=/tmp/modules \
   -v "$sdk_root/scripts/compatibility-build.sh:/build.sh:ro" -v "$volume:/evidence" \
   golang:1.24-bookworm bash /build.sh sdk
+fi
+if [ "$compatibility" = true ] || [ "$consumer_suite" = service ]; then
+ legacy_cli=27049b40
+ printf 'Archived v1 CLI client source=%s (local archive, unpublished)\n' "$(git -C "$obey_root" rev-parse "$legacy_cli")"
  git -C "$obey_root" archive "$legacy_cli" | docker run --init --rm -i --read-only --network=host \
   --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g \
   -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/cache -e GOMODCACHE=/tmp/modules \

@@ -28,3 +28,8 @@ durable:
 [no-cd]
 compatibility:
     bash scripts/test-container.sh compatibility
+
+# Standalone SDK-only HTTP service with app-owned journal and explicit controls.
+[no-cd]
+service:
+    bash scripts/test-container.sh service
