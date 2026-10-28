@@ -14,9 +14,20 @@ cp "/sdk/tests/consumer/${SDK_CONSUMER_SUITE:-oneshot}/go.mod" "/sdk/tests/consu
  go build -mod=readonly github.com/obediencecorp/obey-go-sdk/examples/...
  go version
 )
+if [ "${SDK_COMPATIBILITY_ARTIFACTS:-false}" = true ]; then
+ mkdir -p /tmp/persistent-consumer
+ cp /sdk/tests/consumer/persistent/{go.mod,main.go} /tmp/persistent-consumer/
+ (
+  cd /tmp/persistent-consumer
+  export GOPROXY=file:///evidence/proxy GOSUMDB=off GOTOOLCHAIN=local GOCACHE=/tmp/current-cache GOMODCACHE=/tmp/current-modules
+  go mod download all
+  CGO_ENABLED=0 go build -mod=readonly -o /tmp/consumer-persistent-current .
+ )
+fi
 pattern='^TestMachineSDKConsumer'
 tags=integration,sdk_consumer_tests
+if [ "${SDK_COMPATIBILITY_ARTIFACTS:-false}" = true ]; then tags="$tags,sdk_compatibility_tests"; fi
 if [ "${SDK_CONSUMER_SUITE:-oneshot}" = persistent ]; then pattern='^TestMachineSDKHandles'; tags="$tags,machine_contract_tests"; fi
 if [ -n "${OBEY_SDK_CONSUMER_PATTERN:-}" ]; then pattern=$OBEY_SDK_CONSUMER_PATTERN; fi
 printf 'Consumer selector: %s\n' "$pattern"
-go test -v -race -mod=readonly -count=1 -timeout=10m -tags="$tags" -run "$pattern" ./tests/integration/daemon
+go test -v -race -mod=readonly -count=1 -timeout=20m -tags="$tags" -run "$pattern" ./tests/integration/daemon

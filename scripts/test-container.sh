@@ -5,6 +5,7 @@ mode=${1:?expected process, consumer or durable}
 case "$mode" in
  process) pattern=${OBEY_SDK_PROCESS_PATTERN:-'^TestProcess'}; tags=process_tests; packages=(./internal/execclient/... ./pkg/obey/...) ;;
  consumer) exec bash scripts/test-consumer.sh ;;
+ compatibility) exec bash scripts/test-consumer.sh compatibility ;;
  durable) exec bash scripts/test-consumer.sh persistent ;;
  *) echo 'expected process, consumer or durable' >&2; exit 2 ;;
 esac

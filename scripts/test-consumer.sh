@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 sdk_root=$PWD
 consumer_suite=${1:-oneshot}
+compatibility=false
+if [ "$consumer_suite" = compatibility ]; then compatibility=true; consumer_suite=oneshot; export OBEY_SDK_CONSUMER_PATTERN='^TestMachineSDKConsumerLegacyArtifactPairing$'; fi
 case "$consumer_suite" in oneshot|persistent) ;; *) echo 'expected oneshot or persistent consumer suite' >&2; exit 2 ;; esac
 sdk_revision=$(git rev-parse HEAD)
 sdk_dirty=false
@@ -21,6 +23,23 @@ bash "$obey_root/scripts/test-machine-contracts.sh" build
 (cd "$obey_root" && just test mod-proxy)
 volume=$(docker volume create)
 trap 'docker volume rm "$volume" >/dev/null' EXIT
+if [ "$compatibility" = true ]; then
+ legacy_sdk=f337ff730e731a533f30c0da00d1a5e056281e68
+ legacy_cli=27049b40
+ printf 'Compatibility pinned source: SDK=%s CLI=%s (local archives, unpublished)\n' "$legacy_sdk" "$(git -C "$obey_root" rev-parse "$legacy_cli")"
+ git archive "$legacy_sdk" | docker run --init --rm -i --read-only --network=none \
+  --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
+  -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/cache -e GOMODCACHE=/tmp/modules \
+  -v "$sdk_root/scripts/compatibility-build.sh:/build.sh:ro" -v "$volume:/evidence" \
+  golang:1.24-bookworm bash /build.sh sdk
+ git -C "$obey_root" archive "$legacy_cli" | docker run --init --rm -i --read-only --network=host \
+  --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g \
+  -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/cache -e GOMODCACHE=/tmp/modules \
+  -e GOPROXY='file:///gomodproxy,https://proxy.golang.org,direct' -e GOSUMDB=off \
+  -v "$obey_root/.gomodproxy/cache/download:/gomodproxy:ro" \
+  -v "$sdk_root/scripts/compatibility-build.sh:/build.sh:ro" -v "$volume:/evidence" \
+  golang:1.26-bookworm bash /build.sh cli
+fi
 # No Obey source, credentials, network, or prepopulated module/build caches.
 docker run --init --rm --read-only --network=none \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
@@ -33,6 +52,7 @@ docker run --init --rm --read-only --network=none \
 docker run --init --rm --read-only --network host \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g \
  -e HOME=/tmp/home -e TMPDIR=/tmp/scratch -e GOCACHE=/tmp/obey-cache -e GOMODCACHE=/tmp/obey-modules \
+ -e SDK_COMPATIBILITY_ARTIFACTS="$compatibility" -e SDK_CONSUMER_LEGACY=/evidence/consumer-legacy -e SDK_LEGACY_CLI=/evidence/obey-v1 -e SDK_PERSISTENT_CURRENT=/tmp/consumer-persistent-current \
  -e SDK_CONSUMER_SUITE="$consumer_suite" -e OBEY_SDK_CONSUMER_PATTERN="${OBEY_SDK_CONSUMER_PATTERN:-}" -e OBEY_MACHINE_TEST_CONTAINER=1 -e OBEY_SDK_TEST_CONTAINER=1 \
  -e SDK_CONSUMER_GO124=/evidence/consumer-go124 -e SDK_CONSUMER_CURRENT=/tmp/consumer-current \
  -e DOCKER_HOST=unix:///var/run/docker.sock -e TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock -e TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1 \

@@ -23,3 +23,8 @@ consumer:
 [no-cd]
 durable:
     bash scripts/test-container.sh durable
+
+# Pinned archived SDK/CLI client pairs through the same real daemon/ledger driver.
+[no-cd]
+compatibility:
+    bash scripts/test-container.sh compatibility
