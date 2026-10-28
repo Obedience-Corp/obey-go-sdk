@@ -10,11 +10,12 @@ GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go test -c -race -tags=process_tests -o "
 GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 go test -c -race -tags=process_tests -o "$destination/pkg/obey/process.test" ./pkg/obey
 cp -R internal/protocol/testdata "$destination/internal/protocol/"
 cp scripts/native-macos-run.sh "$destination/run.sh"
+cp LICENSE "$destination/LICENSE"
 {
  printf 'Build-only bundle; native execution NOT established\n'
  git rev-parse HEAD
  git status --porcelain
  go version
- shasum -a 256 "$destination/internal/execclient/process.test" "$destination/pkg/obey/process.test"
+ shasum -a 256 "$destination/internal/execclient/process.test" "$destination/pkg/obey/process.test" "$destination/LICENSE"
 } > "$destination/BUILD.txt"
 printf 'Prepared build-only artifact: %s\n' "$destination"

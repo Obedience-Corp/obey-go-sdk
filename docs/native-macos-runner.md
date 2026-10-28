@@ -1,7 +1,8 @@
 # Isolated native macOS process proof
 
 `just release native-bundle /absolute/new/artifact-directory` compiles Darwin arm64
-race-test executables and copies required fixtures. It executes no tests. BUILD.txt
+race-test executables and copies required fixtures and the SDK's Apache-2.0 LICENSE.
+It executes no tests. BUILD.txt
 records the source revision, dirty paths, toolchain and binary hashes. A dirty bundle
 is preparation evidence only; final runtime certification must identify the tested
 clean revision. Cross-compilation/build success is never native runtime proof.
