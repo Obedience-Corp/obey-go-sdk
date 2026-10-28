@@ -1,0 +1,33 @@
+{
+  "name": "send_indeterminate",
+  "operation": "obey.session.send",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "indeterminate_acceptance",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "error",
+      "code": "indeterminate_acceptance",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "idempotency_key": "key1",
+      "acceptance_indeterminate": true
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "indeterminate",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

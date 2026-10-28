@@ -1,0 +1,11 @@
+{
+  "name": "legacy_read_failure",
+  "operation": "turn.show",
+  "schema": "raw",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "legacy_command_error",
+  "notes": "Without --errors-json stdout remains empty; no new envelope or stderr classification.",
+  "records": [],
+  "stderr": "Synthetic legacy failure"
+}

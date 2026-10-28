@@ -1,0 +1,24 @@
+{
+  "name": "turn_completed",
+  "operation": "turn.show",
+  "schema": "turn",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "open_turn",
+  "notes": "Open is read-only; Wait distinguishes terminal/recovery/result availability.",
+  "records": [
+    {
+      "schema_version": "obey.turn.v1",
+      "turn": {
+        "id": "t1",
+        "session_id": "s1",
+        "campaign_id": "c1",
+        "ordinal": 9007199254740993,
+        "version": 2,
+        "status": "completed",
+        "usage": {}
+      },
+      "next_actions": []
+    }
+  ]
+}

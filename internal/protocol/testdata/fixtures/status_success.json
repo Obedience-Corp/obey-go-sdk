@@ -1,0 +1,41 @@
+{
+  "name": "status_success",
+  "operation": "obey.daemon.status",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.daemon.status",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.PingResponse",
+      "payload": {
+        "daemon_version": "synthetic",
+        "capabilities": {
+          "chat_surfaces": true,
+          "durable_turns": true,
+          "turn_identity": true,
+          "cancel_turn": true,
+          "prompt_queue": true,
+          "send_acceptance": true,
+          "per_turn_model": true
+        }
+      },
+      "session_id": "s1",
+      "campaign_id": "c1"
+    },
+    {
+      "protocol": "obey.daemon.status",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "rpc_completed",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

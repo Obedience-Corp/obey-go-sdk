@@ -1,0 +1,23 @@
+{
+  "name": "doctor_reads_supported",
+  "operation": "doctor",
+  "schema": "doctor",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "capabilities",
+  "notes": "",
+  "records": [
+    {
+      "schema": "obey.doctor",
+      "version": 3,
+      "capabilities": {
+        "machine_read_errors": {
+          "protocol": "obey.machine.error",
+          "versions": [
+            1
+          ]
+        }
+      }
+    }
+  ]
+}

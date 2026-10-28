@@ -1,0 +1,17 @@
+{
+  "name": "observe_legacy_raw",
+  "operation": "legacy.observe",
+  "schema": "raw",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "event": {
+        "session_id": "s1",
+        "dropped_count": "3"
+      }
+    }
+  ]
+}

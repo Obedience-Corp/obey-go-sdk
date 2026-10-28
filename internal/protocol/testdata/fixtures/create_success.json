@@ -1,0 +1,35 @@
+{
+  "name": "create_success",
+  "operation": "obey.session.create",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.create",
+      "version": 1,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "payload_type": "local.v1.CreateSessionResponse",
+      "payload": {
+        "session": {
+          "id": "s1",
+          "campaign_id": "c1"
+        }
+      }
+    },
+    {
+      "protocol": "obey.session.create",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "session_created",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

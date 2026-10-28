@@ -1,0 +1,96 @@
+{
+  "name": "unknown_raw_payload",
+  "operation": "obey.session.run",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "Unknown records preserved, completion still mandatory.",
+  "records": [
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "payload_type": "local.v1.CreateSessionResponse",
+      "payload": {
+        "session": {
+          "id": "s1",
+          "campaign_id": "c1"
+        }
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "event",
+      "payload_type": "local.v1.SendMessageResponse",
+      "payload": {
+        "accepted": {
+          "turn_id": "t1",
+          "status": "TURN_RUNNING"
+        }
+      },
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "future_record",
+      "opaque": {
+        "n": "18446744073709551615"
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "event",
+      "payload_type": "local.v1.FuturePayload",
+      "payload": {
+        "future_field": "opaque"
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "event",
+      "payload_type": "local.v1.SendMessageResponse",
+      "payload": {
+        "event": {
+          "type": "AGENT_COMPLETION",
+          "session_id": "s1",
+          "turn_id": "t1",
+          "durable_sequence": "9007199254740993",
+          "completion": {
+            "content": "Done",
+            "tokens_input": 3,
+            "tokens_output": 2,
+            "cached_tokens": "9007199254740993",
+            "latency_ms": "12",
+            "total_cost_usd_ticks": "10000000000"
+          }
+        }
+      },
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "turn_completed",
+      "cleanup": "stopped",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    }
+  ],
+  "skip_proto_types": [
+    "local.v1.FuturePayload"
+  ]
+}

@@ -1,0 +1,3 @@
+# Build all SDK packages without contacting the CLI or daemon.
+build:
+    go build ./...

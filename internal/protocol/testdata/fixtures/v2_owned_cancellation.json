@@ -1,0 +1,43 @@
+{
+  "name": "v2_owned_cancellation",
+  "operation": "obey.session.run",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "canceled",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "payload_type": "local.v1.CreateSessionResponse",
+      "payload": {
+        "session": {
+          "id": "s1",
+          "campaign_id": "c1"
+        }
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "error",
+      "code": "canceled",
+      "message": "Synthetic diagnostic",
+      "severity": "error"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "terminal",
+      "status": "canceled",
+      "outcome": "canceled",
+      "cleanup": "stopped",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

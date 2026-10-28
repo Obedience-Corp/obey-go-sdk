@@ -1,0 +1,20 @@
+{
+  "name": "read_daemon_unavailable",
+  "operation": "turn.show",
+  "schema": "read-error",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "daemon_unavailable",
+  "notes": "",
+  "records": [
+    {
+      "schema": "obey.machine.error",
+      "version": 1,
+      "operation": "turn.show",
+      "code": "daemon_unavailable",
+      "message": "Synthetic diagnostic",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    }
+  ]
+}

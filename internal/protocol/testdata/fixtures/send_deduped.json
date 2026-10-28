@@ -1,0 +1,40 @@
+{
+  "name": "send_deduped",
+  "operation": "obey.session.send",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "accepted",
+  "notes": "Queue position0 may be omitted by protojson; still queued, not final inference.",
+  "records": [
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.SendMessageResponse",
+      "payload": {
+        "accepted": {
+          "turn_id": "t1",
+          "status": "TURN_COMPLETED",
+          "deduplicated": true
+        }
+      },
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "turn_id": "t1",
+      "idempotency_key": "key1",
+      "client_ref": "job1"
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "accepted",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "completed_result_unavailable",
+  "operation": "Turn.Wait",
+  "schema": "turn",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "result_unavailable",
+  "notes": "Followed by empty retained transcript, never fabricate empty success.",
+  "records": [
+    {
+      "schema_version": "obey.turn.v1",
+      "turn": {
+        "id": "t1",
+        "session_id": "s1",
+        "campaign_id": "c1",
+        "ordinal": 9007199254740993,
+        "version": 2,
+        "status": "completed",
+        "usage": {}
+      },
+      "next_actions": []
+    }
+  ]
+}

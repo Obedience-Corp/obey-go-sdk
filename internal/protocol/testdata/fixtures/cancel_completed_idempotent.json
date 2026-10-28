@@ -1,0 +1,28 @@
+{
+  "name": "cancel_completed_idempotent",
+  "operation": "obey.turn.cancel",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "No-op acknowledgement does not cancel later turn.",
+  "records": [
+    {
+      "protocol": "obey.turn.cancel",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.CancelTurnResponse",
+      "payload": {
+        "status": "TURN_COMPLETED"
+      }
+    },
+    {
+      "protocol": "obey.turn.cancel",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "rpc_completed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "malformed_json",
+  "operation": "obey.session.run",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "protocol_error",
+  "notes": "Syntax-negative raw bytes, no schema records.",
+  "records": [],
+  "raw_stdout": "{\"protocol\":"
+}

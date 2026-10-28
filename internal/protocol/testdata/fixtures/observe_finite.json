@@ -1,0 +1,39 @@
+{
+  "name": "observe_finite",
+  "operation": "obey.observe",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.observe",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.ListRecentActivityResponse",
+      "payload": {
+        "events": [
+          {
+            "id": "history1",
+            "session_id": "s1",
+            "campaign_id": "c1",
+            "kind": "activity",
+            "activity_type": "AGENT_COMPLETION",
+            "message": "Done",
+            "sequence_number": "9007199254740993"
+          }
+        ],
+        "page": {}
+      }
+    },
+    {
+      "protocol": "obey.observe",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "observed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

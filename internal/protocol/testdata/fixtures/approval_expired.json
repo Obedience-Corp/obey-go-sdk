@@ -1,0 +1,28 @@
+{
+  "name": "approval_expired",
+  "operation": "obey.session.approve",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "approval_expired",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "error",
+      "code": "approval_expired",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "grpc_code": "FailedPrecondition"
+    },
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "failed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

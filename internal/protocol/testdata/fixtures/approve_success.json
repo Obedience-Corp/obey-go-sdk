@@ -1,0 +1,30 @@
+{
+  "name": "approve_success",
+  "operation": "obey.session.approve",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.RespondApprovalResponse",
+      "payload": {},
+      "session_id": "s1",
+      "campaign_id": "c1"
+    },
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "rpc_completed",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

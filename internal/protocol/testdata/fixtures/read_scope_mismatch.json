@@ -1,0 +1,20 @@
+{
+  "name": "read_scope_mismatch",
+  "operation": "turn.show",
+  "schema": "read-error",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "scope_mismatch",
+  "notes": "",
+  "records": [
+    {
+      "schema": "obey.machine.error",
+      "version": 1,
+      "operation": "turn.show",
+      "code": "scope_mismatch",
+      "message": "Synthetic diagnostic",
+      "campaign_id": "c1",
+      "turn_id": "t1"
+    }
+  ]
+}

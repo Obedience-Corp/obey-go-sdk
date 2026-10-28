@@ -1,0 +1,33 @@
+{
+  "name": "observe_drop",
+  "operation": "obey.observe",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "detached_with_drop",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.observe",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.WatchAllActivityResponse",
+      "payload": {
+        "event": {
+          "session_id": "s1",
+          "dropped_count": "3",
+          "durable_sequence": "0",
+          "meta_event": "META_EVENT_KEEPALIVE"
+        }
+      }
+    },
+    {
+      "protocol": "obey.observe",
+      "version": 1,
+      "type": "terminal",
+      "status": "canceled",
+      "outcome": "detached",
+      "cleanup": "not_owned"
+    }
+  ]
+}

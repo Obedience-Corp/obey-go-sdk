@@ -1,0 +1,23 @@
+{
+  "name": "old_binary_persistent_read",
+  "operation": "OpenTurn",
+  "schema": "doctor",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "unsupported_capability",
+  "notes": "Assert no turn/session read child spawned after discovery.",
+  "records": [
+    {
+      "schema": "obey.doctor",
+      "version": 3,
+      "capabilities": {
+        "session_run": {
+          "protocol": "obey.session.run",
+          "versions": [
+            1
+          ]
+        }
+      }
+    }
+  ]
+}

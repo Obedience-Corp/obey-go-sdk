@@ -1,0 +1,51 @@
+{
+  "name": "v1_cleanup_warning",
+  "operation": "obey.session.run",
+  "schema": "run-v1",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success_with_cleanup_warning",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.run",
+      "version": 1,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 1,
+      "type": "assistant_content",
+      "session_id": "s1",
+      "content": "Done",
+      "final": true
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 1,
+      "type": "usage",
+      "session_id": "s1",
+      "input_tokens": 3,
+      "output_tokens": 2,
+      "cached_tokens": 9007199254740993,
+      "latency_ms": 12
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 1,
+      "type": "error",
+      "code": "stop_session",
+      "message": "Synthetic stop failure",
+      "session_id": "s1"
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 1,
+      "type": "terminal",
+      "session_id": "s1",
+      "status": "completed"
+    }
+  ]
+}

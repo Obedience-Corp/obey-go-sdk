@@ -1,0 +1,28 @@
+{
+  "name": "approval_resolved",
+  "operation": "obey.session.approve",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "approval_resolved",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "error",
+      "code": "approval_resolved",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "grpc_code": "FailedPrecondition"
+    },
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "failed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

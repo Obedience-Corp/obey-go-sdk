@@ -1,0 +1,28 @@
+{
+  "name": "send_rejected",
+  "operation": "obey.session.send",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "daemon_error",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "error",
+      "code": "daemon_error",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "daemon_code": 5011
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "failed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

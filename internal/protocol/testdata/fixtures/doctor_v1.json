@@ -1,0 +1,25 @@
+{
+  "name": "doctor_v1",
+  "operation": "doctor",
+  "schema": "doctor",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "capabilities",
+  "notes": "Version1/2 synthetic compatibility projections, not claimed captures.",
+  "records": [
+    {
+      "schema": "obey.doctor",
+      "version": 1,
+      "status": "pass",
+      "capabilities": {
+        "session_run": {
+          "protocol": "obey.session.run",
+          "versions": [
+            1
+          ]
+        }
+      },
+      "future_checks": []
+    }
+  ]
+}

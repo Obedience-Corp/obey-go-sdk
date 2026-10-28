@@ -1,0 +1,10 @@
+{
+  "name": "send_empty_dedup_stream",
+  "operation": "obey.session.send",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "indeterminate_acceptance",
+  "notes": "Never accept EOF as durable receipt; return original key.",
+  "records": []
+}

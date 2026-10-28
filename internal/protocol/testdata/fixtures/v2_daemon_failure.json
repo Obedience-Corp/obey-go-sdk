@@ -1,0 +1,48 @@
+{
+  "name": "v2_daemon_failure",
+  "operation": "obey.session.run",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "daemon_error",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "payload_type": "local.v1.CreateSessionResponse",
+      "payload": {
+        "session": {
+          "id": "s1",
+          "campaign_id": "c1"
+        }
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "error",
+      "code": "daemon_error",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "daemon_code": 5011,
+      "grpc_code": "FailedPrecondition",
+      "details": {
+        "field": "model"
+      }
+    },
+    {
+      "protocol": "obey.session.run",
+      "version": 2,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "failed",
+      "cleanup": "stopped",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

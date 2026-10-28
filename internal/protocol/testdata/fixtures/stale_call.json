@@ -1,0 +1,28 @@
+{
+  "name": "stale_call",
+  "operation": "obey.session.approve",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "stale_call",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "error",
+      "code": "stale_call",
+      "message": "Synthetic diagnostic",
+      "severity": "error",
+      "grpc_code": "FailedPrecondition"
+    },
+    {
+      "protocol": "obey.session.approve",
+      "version": 1,
+      "type": "terminal",
+      "status": "failed",
+      "outcome": "failed",
+      "cleanup": "not_owned"
+    }
+  ]
+}

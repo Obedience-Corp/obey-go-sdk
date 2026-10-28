@@ -1,0 +1,25 @@
+{
+  "name": "create_indeterminate",
+  "operation": "obey.session.create",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 1,
+  "expected": "indeterminate_creation",
+  "notes": "Known handle returned with error; no retry.",
+  "records": [
+    {
+      "protocol": "obey.session.create",
+      "version": 1,
+      "type": "session_created",
+      "session_id": "s1",
+      "campaign_id": "c1",
+      "payload_type": "local.v1.CreateSessionResponse",
+      "payload": {
+        "session": {
+          "id": "s1",
+          "campaign_id": "c1"
+        }
+      }
+    }
+  ]
+}

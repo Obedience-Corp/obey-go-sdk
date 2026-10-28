@@ -1,0 +1,27 @@
+{
+  "name": "read_transcript_page",
+  "operation": "turn.transcript",
+  "schema": "raw",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "Existing numeric projection, cursor opaque, read until no more within captured high-water.",
+  "records": [
+    {
+      "schema_version": "obey.turn.v1",
+      "turn_id": "t1",
+      "entries": [
+        {
+          "id": "entry1",
+          "sequence_number": 9007199254740993,
+          "actor": "assistant",
+          "kind": "completion",
+          "content": "Done",
+          "turn_id": "t1"
+        }
+      ],
+      "next_cursor": "opaque",
+      "has_more": true
+    }
+  ]
+}

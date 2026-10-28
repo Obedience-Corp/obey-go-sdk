@@ -1,0 +1,32 @@
+{
+  "name": "cancel_success",
+  "operation": "obey.turn.cancel",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "success",
+  "notes": "",
+  "records": [
+    {
+      "protocol": "obey.turn.cancel",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.CancelTurnResponse",
+      "payload": {
+        "status": "TURN_CANCELLED"
+      },
+      "session_id": "s1",
+      "campaign_id": "c1"
+    },
+    {
+      "protocol": "obey.turn.cancel",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "rpc_completed",
+      "cleanup": "not_owned",
+      "session_id": "s1",
+      "campaign_id": "c1"
+    }
+  ]
+}

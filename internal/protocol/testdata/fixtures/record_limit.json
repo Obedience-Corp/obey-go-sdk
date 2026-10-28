@@ -1,0 +1,14 @@
+{
+  "name": "record_limit",
+  "operation": "obey.session.run",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "output_limit",
+  "notes": "Generate lazily in container; do not allocate on planning validation.",
+  "records": [],
+  "generated_case": {
+    "repeat_byte": "x",
+    "size": 67108865
+  }
+}
