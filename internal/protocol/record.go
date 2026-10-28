@@ -7,6 +7,13 @@ import (
 )
 
 type Envelope struct {
+	ObservedSessionID       string          `json:"observed_session_id"`
+	TargetTurnID            string          `json:"target_turn_id"`
+	CallID                  string          `json:"call_id"`
+	DecisionIndeterminate   bool            `json:"decision_indeterminate"`
+	OutputSource            string          `json:"output_source"`
+	OutputFidelity          string          `json:"output_fidelity"`
+	HighWaterSequence       *uint64         `json:"high_water_sequence,string"`
 	RequestedSessionID      string          `json:"requested_session_id"`
 	Protocol                string          `json:"protocol"`
 	Version                 int             `json:"version"`

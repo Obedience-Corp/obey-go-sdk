@@ -36,6 +36,7 @@ func cloneResult(r *Result) *Result {
 	}
 	out := *r
 	out.Usage = cloneUsage(out.Usage)
+	out.HighWaterSequence = ptrCopy(out.HighWaterSequence)
 	out.Diagnostics = cloneDiagnostics(out.Diagnostics)
 	return &out
 }
@@ -45,6 +46,7 @@ func cloneError(err error) error {
 		return err
 	}
 	out := *e
+	out.RawRecord = append(json.RawMessage(nil), e.RawRecord...)
 	out.DaemonCode = ptrCopy(out.DaemonCode)
 	out.ExitCode = ptrCopy(out.ExitCode)
 	out.Details = append(json.RawMessage(nil), out.Details...)
@@ -86,6 +88,7 @@ func cloneEvent(e Event) Event {
 	e.Receipt = ptrCopy(e.Receipt)
 	if e.Receipt != nil {
 		e.Receipt.QueuePosition = ptrCopy(e.Receipt.QueuePosition)
+		e.Receipt.Raw = append(json.RawMessage(nil), e.Receipt.Raw...)
 	}
 	e.Marker = ptrCopy(e.Marker)
 	if e.Marker != nil {

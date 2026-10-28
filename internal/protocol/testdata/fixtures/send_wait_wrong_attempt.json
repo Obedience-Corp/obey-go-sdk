@@ -1,0 +1,108 @@
+{
+  "name": "send_wait_wrong_attempt",
+  "operation": "obey.session.send",
+  "schema": "record",
+  "schema_valid": true,
+  "exit_code": 0,
+  "expected": "protocol_error",
+  "notes": "Older failed-attempt completion cannot prove the latest completed attempt result, even with a completed terminal.",
+  "records": [
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.SendMessageResponse",
+      "payload": {
+        "accepted": {
+          "turn_id": "t1",
+          "status": "TURN_QUEUED"
+        }
+      },
+      "idempotency_key": "key1",
+      "campaign_id": "c1",
+      "session_id": "s1",
+      "turn_id": "t1",
+      "requested_session_id": "s1",
+      "observed_session_id": "s1",
+      "target_turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.GetTurnResponse",
+      "payload": {
+        "turn": {
+          "id": "t1",
+          "session_id": "s1",
+          "campaign_id": "c1",
+          "status": "TURN_COMPLETED",
+          "latest_attempt": {
+            "id": "a2",
+            "turn_id": "t1",
+            "state": "TURN_ATTEMPT_COMPLETED"
+          },
+          "usage": {
+            "tokens_input": "9007199254740993",
+            "cached_tokens": "9007199254740993"
+          }
+        }
+      },
+      "output_source": "turn_state",
+      "output_fidelity": "snapshot",
+      "campaign_id": "c1",
+      "session_id": "s1",
+      "turn_id": "t1",
+      "requested_session_id": "s1",
+      "observed_session_id": "s1",
+      "target_turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "event",
+      "payload_type": "local.v1.ListSessionTranscriptResponse",
+      "payload": {
+        "entries": [
+          {
+            "id": "completion1",
+            "session_id": "s1",
+            "campaign_id": "c1",
+            "turn_id": "t1",
+            "attempt_id": "a1",
+            "sequence_number": "9007199254740993",
+            "kind": "completion",
+            "activity_type": "AGENT_COMPLETION",
+            "metadata_json": "{\"tokens_in\":\"9007199254740993\"}"
+          }
+        ]
+      },
+      "high_water_sequence": "9007199254740993",
+      "output_source": "retained_transcript",
+      "output_fidelity": "persisted_page",
+      "campaign_id": "c1",
+      "session_id": "s1",
+      "turn_id": "t1",
+      "requested_session_id": "s1",
+      "observed_session_id": "s1",
+      "target_turn_id": "t1"
+    },
+    {
+      "protocol": "obey.session.send",
+      "version": 1,
+      "type": "terminal",
+      "status": "completed",
+      "outcome": "turn_completed",
+      "cleanup": "not_owned",
+      "high_water_sequence": "9007199254740993",
+      "output_source": "retained_transcript",
+      "output_fidelity": "final_only",
+      "campaign_id": "c1",
+      "session_id": "s1",
+      "turn_id": "t1",
+      "requested_session_id": "s1",
+      "observed_session_id": "s1",
+      "target_turn_id": "t1"
+    }
+  ]
+}

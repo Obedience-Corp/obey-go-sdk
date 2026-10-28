@@ -10,13 +10,13 @@ Subprocess tests use `just test process` in disposable Docker scratch. Unit test
 must remain in memory; tests creating files, sockets or child executables require
 the container tag and guard before fixture creation. The consumer lane builds an independent module through an offline local proxy
 on minimum/current Go and runs it through the isolated real CLI/daemon harness.
-The durable lane remains pending its owning implementation task and fails explicitly. No CLI/daemon is contacted by the module scaffold.
+The durable lane uses a separate persistent consumer through that same offline archive and real daemon/provider ledger harness. Builds and pure tests do not contact the CLI or daemon.
 
 This repository is local and unpublished. Remote ownership, license selection,
 version tags and public module availability remain release prerequisites. No
 license or permission to publish is implied by this scaffold.
 
-The current baseline provides `RunPrompt`, final-only `StreamPrompt`, capability
+The current candidate provides `RunPrompt`, final-only `StreamPrompt`, capability
 discovery, copied options/results, typed failures and bounded child cleanup.
 Callers choose their provider/model explicitly:
 
@@ -30,5 +30,10 @@ result, err := client.RunPrompt(ctx, prompt, &obey.RunOptions{
 ```
 
 Import `github.com/obediencecorp/obey-go-sdk/pkg/obey`. See `docs/lifecycle.md`
-and the basic, streaming and service examples. Persistent session/turn methods
-and public release availability remain pending their own acceptance tasks.
+and the basic, streaming and service examples. Persistent `CreateSession`,
+`OpenSession`, read-only `OpenTurn`, `Session.Send`, `Turn.State`, context-only
+`Turn.Wait` and paginated `Session.Transcript` are available. Send returns durable
+acceptance; callers explicitly wait or inspect state. Persist your own submission
+key before Send for crash recovery, and retain partial handles and typed uncertainty
+on errors. Client closure detaches persistent work. Rich observation/controls and
+public release readiness remain under implementation in this local candidate.

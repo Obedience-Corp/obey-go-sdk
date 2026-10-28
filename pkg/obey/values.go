@@ -31,6 +31,7 @@ const (
 )
 
 type Acceptance struct {
+	Raw           json.RawMessage // Original accepted-turn payload, copied on return.
 	Ref           TurnRef
 	Status        TurnStatus
 	QueuePosition *uint32
@@ -76,6 +77,7 @@ type RunOptions struct {
 	RequireLiveEvents bool
 }
 type SendOptions struct {
+	// Mode persists on the session; Model applies only to this accepted turn.
 	Mode, Model, ClientRef, IdempotencyKey string
 	Files                                  []string
 }
@@ -112,13 +114,16 @@ const (
 )
 
 type Result struct {
-	Text        string
-	Session     SessionRef
-	TurnID      string
-	Usage       Usage
-	Protocol    ProtocolVersion
-	Cleanup     CleanupDisposition
-	Diagnostics []Diagnostic
+	OutputSource, OutputFidelity          string
+	HighWaterSequence                     *uint64
+	RequestedSessionID, ObservedSessionID string
+	Text                                  string
+	Session                               SessionRef
+	TurnID                                string
+	Usage                                 Usage
+	Protocol                              ProtocolVersion
+	Cleanup                               CleanupDisposition
+	Diagnostics                           []Diagnostic
 }
 type Diagnostic struct {
 	Code, Message, Severity string
@@ -126,18 +131,24 @@ type Diagnostic struct {
 	Details                 json.RawMessage
 }
 type Error struct {
-	Code, Operation                   string
-	Protocol                          ProtocolVersion
-	Session                           SessionRef
-	TurnID, IdempotencyKey, ClientRef string
-	DaemonCode                        *int32
-	GRPCCode                          string
-	ExitCode                          *int
-	StderrTail                        string
-	Details                           json.RawMessage
-	Diagnostics                       []Diagnostic
-	AcceptanceIndeterminate           bool
-	Cause                             error
+	validatedCLIRecord bool // Set only from a fully validated failed CLI invocation.
+	// RawRecord preserves additional CLI scope/uncertainty fields without parsing
+	// diagnostic text. Returned raw values are copies owned by the caller.
+	RawRecord                                                   json.RawMessage
+	RequestedSessionID, ObservedSessionID, TargetTurnID, CallID string
+	DecisionIndeterminate                                       bool
+	Code, Operation                                             string
+	Protocol                                                    ProtocolVersion
+	Session                                                     SessionRef
+	TurnID, IdempotencyKey, ClientRef                           string
+	DaemonCode                                                  *int32
+	GRPCCode                                                    string
+	ExitCode                                                    *int
+	StderrTail                                                  string
+	Details                                                     json.RawMessage
+	Diagnostics                                                 []Diagnostic
+	AcceptanceIndeterminate                                     bool
+	Cause                                                       error
 }
 
 // Implement Error() and Unwrap() preserving errors.Is context and errors.As process causes.
@@ -228,6 +239,7 @@ type QueuedTurn struct {
 	ClientRef, Preview string
 }
 type TranscriptEntry struct {
+	ActivityType                                                         string
 	ID                                                                   string
 	Session                                                              SessionRef
 	Sequence                                                             uint64
@@ -238,6 +250,7 @@ type TranscriptEntry struct {
 	Raw                                                                  json.RawMessage
 }
 type TranscriptPage struct {
+	Raw        json.RawMessage
 	Entries    []TranscriptEntry
 	NextCursor string
 	HasMore    bool

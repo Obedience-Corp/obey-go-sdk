@@ -19,7 +19,7 @@ race:
 consumer:
     bash scripts/test-container.sh consumer
 
-# Real CLI/daemon durable acceptance; installed by durable integration task.
+# Independent persistent consumer through the existing real CLI/daemon ledger harness.
 [no-cd]
 durable:
     bash scripts/test-container.sh durable

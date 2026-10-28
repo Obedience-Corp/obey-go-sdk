@@ -43,6 +43,8 @@
     "send_rejected.json": "c396051274a6441041de5f579e43db3efb97ead13b954cf9421ee4a879685f63",
     "send_undelivered.json": "dd7f36a8a06b80cd5e3b795f91267231769f121198e35246a60746c98af021c1",
     "send_wait_completed.json": "4456fb8d27df04cf1fb5389349b5d9ed35075e72cb67bea5de585585d86f9759",
+    "send_wait_persisted_result.json": "3ade47f4f4ee986b6171f2ed279bc038e69f98edc0d1f5dbc9c87c35cbacb2d6",
+    "send_wait_wrong_attempt.json": "04489dc155c3efffc8655eeb7b476b8252c8043d57af81641048e05793bbcefb",
     "stale_call.json": "8dc31b3ad3d5c92c23896a735f0a50a483afb59169e61910fd45adbe395ec5f2",
     "status_success.json": "70d5413e253923f4b998fff169f1d481828b6ba580359edc23edd325821d5bc5",
     "stop_success.json": "382f022071c0a31ad8be279c327bc004cf81ce90aee39a81e60f8cd47037feed",

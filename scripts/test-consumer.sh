@@ -2,6 +2,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 sdk_root=$PWD
+consumer_suite=${1:-oneshot}
+case "$consumer_suite" in oneshot|persistent) ;; *) echo 'expected oneshot or persistent consumer suite' >&2; exit 2 ;; esac
+sdk_revision=$(git rev-parse HEAD)
+sdk_dirty=false
+if [ -n "$(git status --porcelain)" ]; then sdk_dirty=true; fi
+printf 'SDK candidate revision=%s dirty=%s suite=%s (local archive, unpublished)\n' "$sdk_revision" "$sdk_dirty" "$consumer_suite"
 obey_root=${OBEY_TEST_SOURCE:-}
 if [ -z "$obey_root" ] && command -v camp >/dev/null; then
  projects_root=$(camp go p --print)
@@ -18,7 +24,7 @@ trap 'docker volume rm "$volume" >/dev/null' EXIT
 # No Obey source, credentials, network, or prepopulated module/build caches.
 docker run --init --rm --read-only --network=none \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
- -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/archive-cache -e GOMODCACHE=/tmp/archive-modules \
+ -e SDK_CONSUMER_SUITE="$consumer_suite" -e OBEY_SDK_TEST_CONTAINER=1 -e HOME=/tmp/home -e GOCACHE=/tmp/archive-cache -e GOMODCACHE=/tmp/archive-modules \
  -v "$sdk_root:/sdk:ro" -v "$volume:/evidence" -w /sdk \
  golang:1.24-bookworm bash /sdk/scripts/consumer-build.sh
 # Current-toolchain consumer also builds from the offline archive with empty
@@ -27,7 +33,7 @@ docker run --init --rm --read-only --network=none \
 docker run --init --rm --read-only --network host \
  --tmpfs /tmp:rw,exec,nosuid,nodev,size=4g \
  -e HOME=/tmp/home -e TMPDIR=/tmp/scratch -e GOCACHE=/tmp/obey-cache -e GOMODCACHE=/tmp/obey-modules \
- -e OBEY_MACHINE_TEST_CONTAINER=1 -e OBEY_SDK_TEST_CONTAINER=1 \
+ -e SDK_CONSUMER_SUITE="$consumer_suite" -e OBEY_MACHINE_TEST_CONTAINER=1 -e OBEY_SDK_TEST_CONTAINER=1 \
  -e SDK_CONSUMER_GO124=/evidence/consumer-go124 -e SDK_CONSUMER_CURRENT=/tmp/consumer-current \
  -e DOCKER_HOST=unix:///var/run/docker.sock -e TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock -e TESTCONTAINERS_HOST_OVERRIDE=127.0.0.1 \
  -e GONOSUMDB='github.com/Obedience-Corp/*,github.com/lancekrogers/*' \

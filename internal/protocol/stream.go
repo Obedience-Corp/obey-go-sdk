@@ -2,9 +2,11 @@ package protocol
 
 import (
 	"encoding/json"
+	"maps"
 )
 
 type Decoder struct {
+	retained                                                retainedProof
 	Protocol                                                string
 	Version                                                 int
 	SessionID, CampID, TurnID                               string
@@ -18,6 +20,17 @@ type Decoder struct {
 }
 
 func (d *Decoder) Add(data []byte) (Envelope, error) {
+	candidate := *d
+	candidate.payloads = maps.Clone(d.payloads)
+	record, err := candidate.add(data)
+	if err != nil {
+		return record, err
+	}
+	*d = candidate
+	return record, nil
+}
+
+func (d *Decoder) add(data []byte) (Envelope, error) {
 	r, err := Decode(data, d.Protocol, d.Version)
 	if err != nil {
 		return r, err
@@ -36,7 +49,13 @@ func (d *Decoder) Add(data []byte) (Envelope, error) {
 		*target = value
 		return true
 	}
-	if !observation && (!scope(&d.SessionID, r.SessionID) || !scope(&d.CampID, r.CampID) || !scope(&d.TurnID, r.TurnID) || !scope(&d.IdempotencyKey, r.IdempotencyKey) || !scope(&d.ClientRef, r.ClientRef)) {
+	forwardedAttach := d.Protocol == "obey.session.send" && r.Type == "event" && r.PayloadType == "local.v1.AttachSessionResponse"
+	if forwardedAttach {
+		if !d.Accepted || r.CampID != d.CampID || r.RequestedSessionID != d.SessionID || r.TargetTurnID != d.TurnID || r.SessionID == "" || r.ObservedSessionID != r.SessionID {
+			return r, failure("protocol_error", "forwarded attach target/observed scope mismatch")
+		}
+	}
+	if !observation && !forwardedAttach && (!scope(&d.SessionID, r.SessionID) || !scope(&d.CampID, r.CampID) || !scope(&d.TurnID, r.TurnID) || !scope(&d.IdempotencyKey, r.IdempotencyKey) || !scope(&d.ClientRef, r.ClientRef)) {
 		return r, failure("protocol_error", "contradictory scope")
 	}
 	legacy := d.Protocol == "obey.session.run" && d.Version == 1
@@ -82,6 +101,9 @@ func (d *Decoder) Add(data []byte) (Envelope, error) {
 		}
 		d.Errors = append(d.Errors, r)
 	case "terminal":
+		if d.retained.high != 0 && (r.HighWaterSequence == nil || *r.HighWaterSequence != d.retained.high) {
+			return r, failure("protocol_error", "retained terminal high-water mismatch")
+		}
 		if !legacy && d.Protocol != "obey.session.attach" && d.Protocol != "obey.observe" {
 			if (d.SessionID != "" && r.SessionID != d.SessionID) || (d.CampID != "" && r.CampID != d.CampID) || (d.Accepted && r.TurnID != d.TurnID) {
 				return r, failure("protocol_error", "terminal scope missing")
@@ -99,6 +121,11 @@ func (d *Decoder) Add(data []byte) (Envelope, error) {
 		switch r.PayloadType {
 		case "local.v1.PingResponse", "local.v1.RespondApprovalResponse", "local.v1.StopSessionResponse", "local.v1.CancelTurnResponse", "local.v1.ListRecentActivityResponse":
 			d.payloads[r.PayloadType] = true
+		}
+		if d.Protocol == "obey.session.send" && d.Accepted && (r.PayloadType == "local.v1.GetTurnResponse" || r.PayloadType == "local.v1.ListSessionTranscriptResponse") {
+			if err := d.retainedEvent(r); err != nil {
+				return r, err
+			}
 		}
 		if observation || r.PayloadType != "local.v1.SendMessageResponse" || (d.Protocol != "obey.session.run" && d.Protocol != "obey.session.send") {
 			break
@@ -194,8 +221,8 @@ func (d *Decoder) Finish(exit int) error {
 				return failure("indeterminate_acceptance", "typed receipt missing")
 			}
 			if d.Last.Outcome == "turn_completed" {
-				if !d.Completion {
-					return failure("protocol_error", "matching completion missing")
+				if !d.Completion && !d.retained.valid() {
+					return failure("protocol_error", "matching completion or retained latest-attempt proof missing")
 				}
 			} else if d.Last.Outcome != "accepted" {
 				return failure("protocol_error", "invalid send outcome")

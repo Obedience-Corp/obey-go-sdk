@@ -4,7 +4,7 @@ set -euo pipefail
 mkdir -p "$HOME" "$GOCACHE" "$GOMODCACHE" /tmp/consumer
 # Only SDK source is mounted in this build stage; no Obey checkout is present.
 go run /sdk/scripts/moduleproxy /sdk /evidence/proxy
-cp /sdk/tests/consumer/oneshot/go.mod /sdk/tests/consumer/oneshot/main.go /tmp/consumer/
+cp "/sdk/tests/consumer/${SDK_CONSUMER_SUITE:-oneshot}/go.mod" "/sdk/tests/consumer/${SDK_CONSUMER_SUITE:-oneshot}/main.go" /tmp/consumer/
 cd /tmp/consumer
 export GOPROXY=file:///evidence/proxy GOSUMDB=off GOTOOLCHAIN=local
 # These caches are empty and independent from the archive tool's compilation.
