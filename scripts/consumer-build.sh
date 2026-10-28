@@ -11,6 +11,9 @@ export GOPROXY=file:///evidence/proxy GOSUMDB=off GOTOOLCHAIN=local
 export GOCACHE=/tmp/consumer-cache GOMODCACHE=/tmp/consumer-modules
 mkdir -p "$GOCACHE" "$GOMODCACHE"
 go mod download all
+sdk_dir=$(go list -m -f '{{.Dir}}' github.com/obediencecorp/obey-go-sdk)
+cmp /sdk/LICENSE "$sdk_dir/LICENSE"
+printf 'Apache-2.0 LICENSE retained in downloaded SDK module\n'
 go list -m all | tee /evidence/modules.txt
 if go list -m -json all | grep -q '"Replace":'; then echo 'consumer replacement directive is forbidden' >&2; exit 1; fi
 if [ "$(go list -m all | wc -l)" -ne 2 ]; then echo 'unexpected consumer dependency closure' >&2; exit 1; fi

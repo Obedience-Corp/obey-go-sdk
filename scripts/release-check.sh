@@ -20,8 +20,12 @@ docker run --init --rm --read-only --network=none \
  -v "$PWD:/sdk:ro" -w /sdk golang:1.24-bookworm bash scripts/consumer-build.sh
 printf 'Clean source + isolated offline import/build checks passed; local archive only\n'
 missing=0
-if [ ! -s LICENSE ]; then echo 'PENDING: owner-approved license' >&2; missing=1; fi
-if [ ! -s docs/distribution-decision.md ]; then echo 'PENDING: explicit owner/distribution decision' >&2; missing=1; fi
+if [ ! -s LICENSE ] || ! rg -q '^License: Apache-2.0$' docs/distribution-decision.md; then
+ echo 'PENDING: owner-approved Apache-2.0 license' >&2; missing=1
+fi
+if ! rg -q '^Source distribution: open source$' docs/distribution-decision.md || ! rg -q '^Repository decision: approved$' docs/distribution-decision.md; then
+ echo 'PENDING: canonical repository/module ownership decision' >&2; missing=1
+fi
 if [ ! -s docs/native-macos-evidence.md ]; then echo 'PENDING: actual isolated native macOS lifecycle evidence' >&2; missing=1; fi
 [ "$missing" = 0 ] || { echo 'Release readiness incomplete; do not publish or mark platform acceptance complete' >&2; exit 1; }
 printf 'Review recorded decisions/evidence before any separately authorized publication\n'

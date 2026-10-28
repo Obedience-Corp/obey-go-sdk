@@ -40,7 +40,7 @@ func main() {
 			return nil
 		}
 		top := strings.Split(filepath.ToSlash(relative), "/")[0]
-		allowed := top == "pkg" || top == "internal" || top == "examples" || relative == "go.mod" || relative == "README.md"
+		allowed := top == "pkg" || top == "internal" || top == "examples" || relative == "go.mod" || relative == "README.md" || relative == "LICENSE"
 		if !allowed {
 			if entry.IsDir() {
 				return filepath.SkipDir

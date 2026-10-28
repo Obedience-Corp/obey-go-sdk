@@ -12,9 +12,12 @@ the container tag and guard before fixture creation. The consumer lane builds an
 on minimum/current Go and runs it through the isolated real CLI/daemon harness.
 The durable lane uses a separate persistent consumer through that same offline archive and real daemon/provider ledger harness. Builds and pure tests do not contact the CLI or daemon.
 
-This repository is local and unpublished. Remote ownership, license selection,
-version tags and public module availability remain release prerequisites. No
-license or permission to publish is implied by this scaffold.
+This SDK is open source under the [Apache License 2.0](LICENSE), intended for
+people building applications around the Obey daemon. The daemon is proprietary;
+this license applies to the SDK repository.
+
+This repository is currently local and unpublished. Canonical repository/module
+ownership, version tags and public module availability remain release prerequisites.
 
 The current candidate provides `RunPrompt`, `StreamPrompt` with advertised live/final-only fidelity, capability
 discovery, copied options/results, typed failures and bounded child cleanup.
