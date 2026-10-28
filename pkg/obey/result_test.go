@@ -159,3 +159,17 @@ func TestCompletedDoesNotMaskJoinedTransportFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCallerDeadlineNormalizesCLICanceled(t *testing.T) {
+	b := newResultBuilder("obey.session.run", 1, 0)
+	for _, record := range []string{`{"protocol":"obey.session.run","version":1,"type":"session_created","session_id":"s","campaign_id":"c"}`, `{"protocol":"obey.session.run","version":1,"type":"error","session_id":"s","code":"canceled","message":"CLI received SIGTERM"}`, `{"protocol":"obey.session.run","version":1,"type":"terminal","session_id":"s","status":"canceled"}`} {
+		if _, err := b.add([]byte(record)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	result, err := b.finish(execclient.Outcome{ExitCode: 1, Err: context.DeadlineExceeded}, nil)
+	var failure *Error
+	if !errors.As(err, &failure) || failure.Code != "timeout" || !errors.Is(err, context.DeadlineExceeded) || result.Cleanup != CleanupStopped || result.Diagnostics[0].Code != "canceled" {
+		t.Fatalf("%+v %v", result, err)
+	}
+}

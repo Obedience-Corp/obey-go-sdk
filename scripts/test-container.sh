@@ -4,7 +4,8 @@ cd "$(dirname "$0")/.."
 mode=${1:?expected process, consumer or durable}
 case "$mode" in
  process) pattern='^TestProcess'; tags=process_tests; packages=(./internal/execclient/... ./pkg/obey/...) ;;
- consumer|durable) echo "$mode verification is not implemented yet; complete its owning acceptance task" >&2; exit 1 ;;
+ consumer) exec bash scripts/test-consumer.sh ;;
+ durable) echo "$mode verification is not implemented yet; complete its owning acceptance task" >&2; exit 1 ;;
  *) echo 'expected process, consumer or durable' >&2; exit 2 ;;
 esac
 if ! rg -l '^func TestProcess' internal/execclient pkg/obey >/dev/null; then

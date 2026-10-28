@@ -127,6 +127,7 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 	stderrDone := make(chan struct{})
 	go func() { defer close(stderrDone); _, _ = io.Copy(&tail, stderr) }()
 	stopWatcher := make(chan struct{})
+	forceDrainStop := make(chan struct{})
 	watcherDone := make(chan struct{})
 	go func() {
 		defer close(watcherDone)
@@ -138,6 +139,7 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 			select {
 			case <-stopWatcher:
 			case <-timer.C:
+				close(forceDrainStop)
 				_ = p.cmd.Process.Kill()
 				_ = stdout.Close()
 				_ = stderr.Close()
@@ -150,13 +152,14 @@ func (r *Runner) run(p *Process, stdout, stderr io.ReadCloser) {
 		case p.records <- record:
 			return nil
 		case <-p.ctx.Done():
-			// Keep draining during graceful shutdown even if the consumer has
-			// detached. Never block cleanup behind a full application queue.
+			// Preserve records during graceful shutdown so Result can drain
+			// the confirming terminal. The grace bound releases an abandoned queue.
 			select {
 			case p.records <- record:
-			default:
+				return nil
+			case <-forceDrainStop:
+				return context.Cause(p.ctx)
 			}
-			return nil
 		}
 	})
 	if readErr != nil {
@@ -282,4 +285,28 @@ func (p *Process) finalError() error {
 		return p.outcome.Err
 	}
 	return io.EOF
+}
+
+// DrainNext keeps reading during the child's bounded cleanup grace even after
+// the operation context ended. It is for the sole stream owner, not a second
+// concurrent consumer.
+func (p *Process) DrainNext() ([]byte, error) {
+	record, ok := <-p.records
+	if ok {
+		return record, nil
+	}
+	return nil, p.finalError()
+}
+
+// Cancel starts bounded shutdown without waiting; the stream owner continues
+// draining and calls Wait once the records channel closes.
+func (p *Process) Cancel(cause error) { p.cancel(cause) }
+
+func (p *Process) Finished() bool {
+	select {
+	case <-p.done:
+		return true
+	default:
+		return false
+	}
 }

@@ -85,11 +85,17 @@ func (b *resultBuilder) add(data []byte) (protocol.Envelope, error) {
 			}
 		}
 	case "error":
+		if r.Severity == "" {
+			r.Severity = "error"
+			if r.Code == "stop_session" {
+				r.Severity = "warning"
+			}
+		}
 		b.result.Diagnostics = append(b.result.Diagnostics, Diagnostic{Code: r.Code, Message: r.Message, Severity: r.Severity, DaemonCode: r.DaemonCode, Details: append(json.RawMessage(nil), r.Details...)})
 	case "terminal":
 		if r.Cleanup != "" {
 			b.result.Cleanup = CleanupDisposition(r.Cleanup)
-		} else if r.Status == "completed" {
+		} else if b.decoder.Created && r.SessionID == b.decoder.SessionID {
 			b.result.Cleanup = CleanupStopped
 			for _, d := range b.result.Diagnostics {
 				if d.Code == "stop_session" {
@@ -112,6 +118,16 @@ func (b *resultBuilder) finish(out execclient.Outcome, parseErr error) (*Result,
 	var pe *protocol.Error
 	if errors.As(err, &pe) {
 		code = pe.Code
+	}
+	if code == "canceled" && errors.Is(out.Err, context.DeadlineExceeded) {
+		code = "timeout"
+	}
+	if parseErr == nil && !b.decoder.Terminal {
+		if errors.Is(out.Err, context.DeadlineExceeded) {
+			code = "timeout"
+		} else if errors.Is(out.Err, context.Canceled) {
+			code = "canceled"
+		}
 	}
 	if errors.Is(out.Err, execclient.ErrOutputLimit) {
 		code = "output_limit"
