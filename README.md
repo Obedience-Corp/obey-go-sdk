@@ -1,55 +1,162 @@
-# obey-go-sdk
+<h1 align="center">Obey Go SDK</h1>
 
-Go module `github.com/Obedience-Corp/obey-go-sdk`, public package `pkg/obey`.
-Requires Go 1.24 or newer and an installed compatible Obey CLI. The operator
-configures Obey's daemon and authentication; the SDK does not own credentials
-or link private protobuf packages. Runtime dependencies use the standard library.
+<p align="center">Build Go applications around the Obey daemon.</p>
 
-Development uses `just build`, `just lint`, `just test unit`, and `just test race`.
-Subprocess tests use `just test process` in disposable Docker scratch. Unit tests
-must remain in memory; tests creating files, sockets or child executables require
-the container tag and guard before fixture creation. The consumer lane builds an independent module through an offline local proxy
-on minimum/current Go and runs it through the isolated real CLI/daemon harness.
-The durable lane uses a separate persistent consumer through that same offline archive and real daemon/provider ledger harness. Builds and pure tests do not contact the CLI or daemon.
+<p align="center">
+  <a href="go.mod"><img src="https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go&amp;logoColor=white" alt="Go 1.24+"></a>
+  <a href="https://pkg.go.dev/github.com/Obedience-Corp/obey-go-sdk/pkg/obey"><img src="https://pkg.go.dev/badge/github.com/Obedience-Corp/obey-go-sdk/pkg/obey.svg" alt="Go Reference"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License: Apache 2.0"></a>
+  <a href="https://github.com/Obedience-Corp/festival"><img src="https://img.shields.io/badge/built%20with-Festival-7c3aed.svg" alt="Built with Festival"></a>
+</p>
 
-This SDK is open source under the [Apache License 2.0](LICENSE), intended for
-people building applications around the Obey daemon. The daemon is proprietary;
-this license applies to the SDK repository.
+<p align="center">
+  <a href="#installation">Installation</a> ·
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#examples">Examples</a> ·
+  <a href="https://pkg.go.dev/github.com/Obedience-Corp/obey-go-sdk/pkg/obey">API reference</a>
+</p>
 
-Canonical repository: [Obedience-Corp/obey-go-sdk](https://github.com/Obedience-Corp/obey-go-sdk).
-This is a prerelease SDK. Native macOS runtime verification is still pending; see
-[release notes](docs/release-notes.md) for the tested platform scope.
+Submit prompts, stream activity, and manage durable sessions from your Go application.
+The SDK uses the installed Obey CLI as its transport and has standard-library-only
+runtime dependencies.
 
-The current candidate provides `RunPrompt`, `StreamPrompt` with advertised live/final-only fidelity, capability
-discovery, copied options/results, typed failures and bounded child cleanup.
-Callers choose their provider/model explicitly:
+The SDK is open source under Apache-2.0. The Obey daemon is proprietary and runs
+separately. This SDK is currently a prerelease; see [platform support](#platform-support)
+for the verified runtime scope.
 
-```go
-client, err := obey.NewClientFromPath(obey.WithCamp(camp))
-if err != nil { return err }
-defer client.Close()
-result, err := client.RunPrompt(ctx, prompt, &obey.RunOptions{
-    SessionOptions: obey.SessionOptions{Provider: provider, Model: model},
-})
+## Installation
+
+Requires **Go 1.24+**, a compatible Obey CLI on `PATH`, and a running Obey daemon
+with your camp, provider, and model configured.
+
+```sh
+go get github.com/Obedience-Corp/obey-go-sdk@main
 ```
 
-Import `github.com/Obedience-Corp/obey-go-sdk/pkg/obey`. See `docs/lifecycle.md`
-and the basic, streaming and service examples. Persistent `CreateSession`,
-`OpenSession`, read-only `OpenTurn`, `Session.Send`, `Turn.State`, context-only
-`Turn.Wait` and paginated `Session.Transcript` are available. Send returns durable
-acceptance; callers explicitly wait or inspect state. Persist your own submission
-key before Send for crash recovery, and retain partial handles and typed uncertainty
-on errors. Client closure detaches persistent work. `Session.Attach` and `Client.Observe`
-expose typed/raw event wrappers with explicit scope and pagination. Explicit
-approval/cancel/stop are available; public release readiness remains pending in
-this local candidate. See `examples/observe` for caller-controlled reconnect.
+Import the public package:
 
-Persistent handles expose explicit `PendingApprovals`, `RespondApproval`,
-`Turn.Cancel` and `Session.Stop`. See [lifecycle and controls](docs/lifecycle.md)
-and [approval inspection/decisions](examples/approvals/main.go). Decision errors
-can be indeterminate; no mutation is retried automatically. Cancellation acknowledgements
-are separate from physical exit and do not reverse a recorded effect.
+```go
+import "github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
+```
 
-The independent SDK-only HTTP fixture and registered journey are described in
-[service integration evidence](docs/integration-evidence.md). `just test service`
-proves journal-before-send, restart recovery and explicit controls in containers.
+The prerelease install resolves `main` to a Go pseudo-version recorded in your
+application's `go.mod`. See [compatibility](docs/compatibility.md) for capability
+discovery and supported machine protocols.
+
+## Quick start
+
+Replace the camp, provider, and model below with values configured in your daemon.
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
+)
+
+func main() {
+	if err := run(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run(ctx context.Context) error {
+	client, err := obey.NewClientFromPath(obey.WithCamp("my-camp"))
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	result, err := client.RunPrompt(ctx, "Summarize the current project", &obey.RunOptions{
+		SessionOptions: obey.SessionOptions{
+			Provider: "your-provider",
+			Model:    "your-model",
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(result.Text)
+	return nil
+}
+```
+
+Daemon requests accept a `context.Context`, so HTTP request contexts and application
+cancellation can flow through to the CLI operation.
+
+## API overview
+
+| Workflow | API |
+| --- | --- |
+| Run a prompt | `Client.RunPrompt`, `Client.StreamPrompt` |
+| Create or reopen a session | `Client.CreateSession`, `Client.OpenSession` |
+| Submit durable work | `Session.Send` |
+| Inspect or recover a turn | `Client.OpenTurn`, `Turn.State`, `Turn.Wait` |
+| Read history and activity | `Session.Transcript`, `Session.Attach`, `Client.Observe` |
+| Handle approvals | `Session.PendingApprovals`, `Session.RespondApproval` |
+| Control work explicitly | `Turn.Cancel`, `Session.Stop` |
+
+One-shot runs own their new session and attempt cleanup when they finish. Persistent
+sessions have a different lifetime: closing the client detaches, and your application decides when
+to cancel a turn or stop a session.
+
+For durable submissions, persist your application's idempotency key **before** calling
+`Session.Send`. Retain returned references, including partial references on errors,
+for recovery. Send acknowledges acceptance; `Turn.Wait` retrieves the original turn's
+result. Applications control mutation retries and approval decisions explicitly.
+
+See [lifecycle and recovery](docs/lifecycle.md) for ownership, cancellation, acceptance
+uncertainty, observation cursors, and retained-result behavior.
+
+## Examples
+
+| Example | Demonstrates |
+| --- | --- |
+| [Basic prompt](examples/basic/main.go) | A one-shot prompt with explicit provider and model |
+| [Streaming](examples/streaming/main.go) | Incremental events and final results |
+| [Observation](examples/observe/main.go) | Scoped activity streams and caller-controlled reconnect |
+| [Approvals](examples/approvals/main.go) | Inspecting pending calls and submitting explicit decisions |
+| [HTTP service](examples/service/main.go) | Using request contexts in a Go HTTP handler |
+
+The [persistent HTTP integration fixture](tests/consumer/service/README.md) demonstrates
+application-owned key/ref journaling, process restart, and explicit session controls.
+Its [integration evidence](docs/integration-evidence.md) records the tested scenarios.
+
+## Platform support
+
+| Platform | Status |
+| --- | --- |
+| Linux arm64 | CLI/daemon lifecycle and independent consumer integration verified |
+| macOS arm64 | Native test binaries compile; isolated lifecycle execution pending |
+| Windows | Unsupported |
+
+The operator manages daemon startup, authentication, and provider configuration.
+See [release notes](docs/release-notes.md) for the current verification limits.
+
+## Development
+
+```sh
+just build
+just lint
+just test unit
+```
+
+Subprocess tests run in disposable Docker containers:
+
+```sh
+just test process
+```
+
+Keep filesystem, socket, database, and child-process fixtures in the isolated test
+lanes. See [integration evidence](docs/integration-evidence.md) for real-daemon
+consumer checks.
+
+## License
+
+[Apache License 2.0](LICENSE). The license covers this SDK; the Obey daemon is
+distributed separately under its own terms.
