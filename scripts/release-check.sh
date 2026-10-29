@@ -27,5 +27,5 @@ if ! rg -q '^Source distribution: open source$' docs/distribution-decision.md ||
  echo 'PENDING: canonical repository/module ownership decision' >&2; missing=1
 fi
 if [ ! -s docs/native-macos-evidence.md ]; then echo 'PENDING: actual isolated native macOS lifecycle evidence' >&2; missing=1; fi
-[ "$missing" = 0 ] || { echo 'Release readiness incomplete; do not publish or mark platform acceptance complete' >&2; exit 1; }
+[ "$missing" = 0 ] || { echo 'Versioned release readiness incomplete; do not tag a release or mark platform acceptance complete' >&2; exit 1; }
 printf 'Review recorded decisions/evidence before any separately authorized publication\n'
