@@ -1,0 +1,89 @@
+name: SDK integration
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '23 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdk-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: SDK unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Pure tests on minimum Go
+        run: |
+          docker run --init --rm --read-only \
+            --tmpfs /tmp:rw,exec,nosuid,nodev,size=2g \
+            -e HOME=/tmp/home -e GOCACHE=/tmp/cache -e GOMODCACHE=/tmp/modules \
+            -v "$PWD:/sdk:ro" -w /sdk golang:1.24-bookworm \
+            go test -race -count=1 ./...
+
+  installed:
+    name: Installed Obey (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    env:
+      FESTIVAL_VERSION: latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify candidate SDK against Festival-installed public Obey
+        run: bash scripts/test-installed.sh
+      - name: Retain installed-release provenance and assertions
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: installed-obey-${{ matrix.runner }}
+          path: |
+            .test-output/installed/*.json
+            .test-output/installed/*.txt
+            .test-output/installed/*.log
+            .test-output/installed/*.sha256
+          if-no-files-found: warn
+
+  native-macos:
+    name: Native macOS arm64 process lifecycle
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: '1.24.13'
+          cache: false
+      - name: Build and execute real helper-child race suites in isolated runner
+        env:
+          OBEY_SDK_ISOLATED_MACOS: '1'
+        run: |
+          bash scripts/native-macos-bundle.sh "$RUNNER_TEMP/sdk-native"
+          bash "$RUNNER_TEMP/sdk-native/run.sh"
+      - name: Retain native platform, source and lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-macos-arm64
+          path: |
+            ${{ runner.temp }}/sdk-native/BUILD.txt
+            ${{ runner.temp }}/sdk-native/results/*
+          if-no-files-found: warn

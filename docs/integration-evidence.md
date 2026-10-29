@@ -1,4 +1,41 @@
-# Persistent service integration
+# Integration evidence
+
+## Public installed-release check
+
+`just test installed` builds the candidate SDK into a clean independent Go 1.24
+consumer using a local module archive. The module graph must contain exactly the
+application and public SDK, with no `replace` directive, private Obey source,
+protos or provider SDK. The downloaded module must retain the Apache-2.0 LICENSE.
+The candidate archive tests the current source; it is not a published SDK version.
+
+Released Festival installs stable Obey from its verified official marketplace in
+a disposable, non-root Docker container. The test records installer receipts,
+marketplace verification, versions, source provenance and executable hashes in
+`.test-output/installed/`. Runtime sockets and databases stay inside the container.
+The only provider is an in-process OpenAI-compatible loopback fixture with a dummy
+key. No external model credentials or private checkout are required.
+
+Assertions cover the exact prompt response, negotiated protocol, exact session and
+camp identity, one provider request, and an independent CLI readback of one turn
+with the session stopped. When persistent creation is advertised, the test also
+checks Send/Wait, same-key deduplication, State and explicit Stop. Otherwise it
+requires a typed `unsupported_protocol` refusal with identical before/after session
+sets and no additional provider request. It then stops its own daemon and checks
+typed failure without automatic daemon startup or another provider request.
+
+Stable Obey 0.2.5 advertises only the v1 one-shot protocol. Persistent operations
+are therefore a verified safe-refusal path, not a claim of released support.
+Set `OBEY_REQUIRE_PERSISTENT=1` to make missing persistent support fail the check.
+Pin the bootstrap release with `FESTIVAL_VERSION=0.3.25`; the default follows latest
+Festival and stable Obey to detect future release regressions.
+
+GitHub Actions runs pure race tests and the installed check on Linux amd64 and
+arm64 for pull requests, `main`, and nightly. A separate isolated macOS arm64 job
+executes the existing native helper-child lifecycle suites. Artifacts retain
+provenance and failure logs. The macOS job proves SDK process handling, not a
+native installed-daemon integration.
+
+## Persistent service integration
 
 `tests/consumer/service` is an independent, SDK-only HTTP application. Run
 `just test service` to build it through a local module archive under both supported
@@ -37,5 +74,6 @@ The fixture uses crash-provider/crash-model and a durable deterministic effect l
 Counts prove original identities, orchestration and no replay; they do not prove
 semantic conversation memory, external tool effects or real-provider performance.
 Fresh capability discovery and Ping timings are setup-only measurements; provider
-latency is unmeasured. Native macOS lifecycle and public distribution remain separate
-release prerequisites.
+latency is unmeasured. Public SDK source distribution has been verified separately
+through the normal Go proxy and checksum database. A versioned release still needs
+the festival's remaining certification gates.
