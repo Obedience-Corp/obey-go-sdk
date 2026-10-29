@@ -41,8 +41,9 @@ executable hashes. The deterministic install-and-SDK VHS recording is embedded i
 [PR #2](https://github.com/Obedience-Corp/obey-go-sdk/pull/2), with a separate fresh
 PTY/pyte replay and persisted readback checks. The video opens Festival's TUI,
 navigates Browse catalog to Obey, installs it, then runs the SDK consumer.
-It uses the identified candidate from [installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73),
-which fixes the released 0.3.25 catalog-routing bug. Automated CI retains the
+The original recording uses the identified candidate from
+[installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73).
+That fix ships in installer **0.3.9**, included in Festival **0.3.26**. Automated CI retains the
 released CLI installation path. Docker lacks systemd; the SDK check owns its
 foreground daemon and does not claim automatic service setup passed.
 

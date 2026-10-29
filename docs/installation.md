@@ -30,10 +30,11 @@ festival resolve obey
 obey version
 ```
 
-Festival **0.3.25** has a catalog-routing bug that selects Festival when you choose
-Obey. The fix is in [installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73).
-The TUI demo uses that explicitly identified installer candidate. Until the fix is
-released, use the scripted installation below with the released installer.
+[Festival **0.3.26**](https://github.com/Obedience-Corp/festival/releases/tag/v0.3.26)
+includes installer **0.3.9** and the Obey catalog-routing fix. Upgrade Festival if
+you are using 0.3.25, which selects Festival when you choose Obey. The original
+TUI recording used the identified candidate from
+[installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73).
 
 ## Scripted installation
 
