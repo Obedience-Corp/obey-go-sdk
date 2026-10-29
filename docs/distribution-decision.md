@@ -16,5 +16,6 @@ publication includes the implemented SDK, examples, consumer fixtures and full
 Apache-2.0 [LICENSE](../LICENSE). Module and native verification archives retain
 that license byte-for-byte.
 
-No versioned release or native macOS runtime acceptance is implied by public source
-availability. Native lifecycle verification remains pending in an isolated runner.
+Public source availability does not imply a versioned release. Actual isolated
+native SDK lifecycle acceptance is recorded separately in
+[native evidence](native-macos-evidence.md).

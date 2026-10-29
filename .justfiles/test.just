@@ -33,3 +33,8 @@ compatibility:
 [no-cd]
 service:
     bash scripts/test-container.sh service
+
+# Candidate SDK against public binaries installed by released Festival, no private checkout.
+[no-cd]
+installed:
+    bash scripts/test-installed.sh

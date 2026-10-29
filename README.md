@@ -43,6 +43,11 @@ The prerelease install resolves `main` to a Go pseudo-version recorded in your
 application's `go.mod`. See [compatibility](docs/compatibility.md) for capability
 discovery and supported machine protocols.
 
+Install Obey through the [Festival installer](docs/installation.md). Stable Obey
+0.2.5 supports one-shot prompts through protocol v1. Persistent SDK APIs require
+a daemon and CLI that advertise the corresponding machine protocols; unsupported
+operations return a typed error before creating a session.
+
 ## Quick start
 
 Replace the camp, provider, and model below with values configured in your daemon.
@@ -131,8 +136,8 @@ Its [integration evidence](docs/integration-evidence.md) records the tested scen
 
 | Platform | Status |
 | --- | --- |
-| Linux arm64 | CLI/daemon lifecycle and independent consumer integration verified |
-| macOS arm64 | Native test binaries compile; isolated lifecycle execution pending |
+| Linux amd64 and arm64 | Festival-installed CLI/daemon integration verified |
+| macOS arm64 | Isolated native SDK process lifecycle verified; see [evidence](docs/native-macos-evidence.md) |
 | Windows | Unsupported |
 
 The operator manages daemon startup, authentication, and provider configuration.
@@ -155,6 +160,17 @@ just test process
 Keep filesystem, socket, database, and child-process fixtures in the isolated test
 lanes. See [integration evidence](docs/integration-evidence.md) for real-daemon
 consumer checks.
+
+Run the public-release integration with Docker and network access:
+
+```sh
+just test installed
+```
+
+This installs Obey through released Festival, exercises the SDK against the actual
+daemon with a deterministic loopback provider, and verifies persisted session state.
+It needs no private Obey checkout or provider credentials. CI runs it on pull
+requests, pushes to `main`, and nightly to catch release compatibility regressions.
 
 ## License
 

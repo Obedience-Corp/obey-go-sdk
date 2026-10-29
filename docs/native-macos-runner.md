@@ -22,8 +22,8 @@ protocol errors, exact scope and persistent detach. Linux actual CLI/daemon/prov
 certification remains separate; these helper tests do not prove native daemon or
 real-provider support. Windows is unsupported.
 
-Current runner prerequisite: the discovered FA0027 Mac VM is owned by another active
-festival and remains at its user account-creation handoff. It has not been started,
-cloned, configured or used for this work. No native runtime evidence is currently
-available. Keep release acceptance pending until an approved initialized runner and
-actual passing logs exist. No remote CI dispatch is implied by preparing this bundle.
+The `SDK integration` workflow now provides an isolated `macos-15` arm64 runner for
+this bundle. It records the tested source and uploads build and execution logs.
+The first passing execution and its source/binary provenance are recorded in
+[native evidence](native-macos-evidence.md). The separate FA0027 VM belongs to
+another festival and is not used here.

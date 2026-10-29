@@ -23,7 +23,9 @@ while read -r module version; do
   echo "unexpected consumer dependency: $module" >&2; exit 1
  fi
 done < /evidence/modules.txt
-go test -mod=readonly ./...
+test_tags=()
+if [ "${SDK_CONSUMER_SUITE:-oneshot}" = installed ]; then test_tags=(-tags=installed_process_tests); fi
+go test -mod=readonly "${test_tags[@]}" ./...
 CGO_ENABLED=0 go build -mod=readonly -o /evidence/consumer-go124 .
 go build -mod=readonly github.com/Obedience-Corp/obey-go-sdk/examples/...
 go version | tee /evidence/minimum-toolchain.txt
