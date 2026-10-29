@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: '1.24.13'
+          cache: false
+      - name: Verify stable tag and passing main source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
+          revision="$(git rev-parse HEAD)"
+          test "$revision" = "$(git rev-parse "$GITHUB_REF_NAME^{commit}")"
+          git merge-base --is-ancestor "$revision" origin/main
+          result="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
+            --branch main --commit "$revision" --limit 1 \
+            --json status,conclusion --jq '.[0] | [.status, .conclusion] | join(" ")')"
+          test "$result" = 'completed success'
+      - name: Check clean source and isolated consumer archive
+        run: bash scripts/release-check.sh
+      - name: Publish SDK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME already exists."
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --verify-tag --title "Obey Go SDK $GITHUB_REF_NAME" \
+              --notes-file docs/release-notes.md --latest
+          fi
+      - name: Verify public versioned Go installation
+        run: bash scripts/test-published.sh "$GITHUB_REF_NAME"

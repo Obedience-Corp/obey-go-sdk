@@ -67,13 +67,12 @@ provider in a real application.
 
 ## Released compatibility
 
-The installed-release test verified Festival **0.3.25** installing stable Obey
-**0.2.5** through the CLI from the verified `official-obey` marketplace on Linux
-amd64 and arm64.
+The SDK release is verified with Festival **0.3.26** installing stable Obey
+**0.3.0** from the verified `official-obey` marketplace on Linux amd64 and arm64.
 The daemon returned the exact loopback-provider response, and an independent CLI
 readback confirmed one persisted turn and a stopped session.
 
-Obey 0.2.5 advertises `obey.session.run` **v1**. `RunPrompt` works with that
+Obey 0.3.0 advertises `obey.session.run` **v1**. `RunPrompt` works with that
 protocol; `StreamPrompt` provides its final result, without v2 live-event guarantees.
 Persistent creation, durable submissions and the other machine APIs require
 corresponding advertised capabilities. On this stable release, `CreateSession`
