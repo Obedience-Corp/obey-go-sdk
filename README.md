@@ -136,8 +136,8 @@ Its [integration evidence](docs/integration-evidence.md) records the tested scen
 
 | Platform | Status |
 | --- | --- |
-| Linux arm64 | CLI/daemon lifecycle and independent consumer integration verified |
-| macOS arm64 | Native test binaries compile; isolated lifecycle execution pending |
+| Linux amd64 and arm64 | Festival-installed CLI/daemon integration verified |
+| macOS arm64 | Isolated native SDK process lifecycle verified; see [evidence](docs/native-macos-evidence.md) |
 | Windows | Unsupported |
 
 The operator manages daemon startup, authentication, and provider configuration.

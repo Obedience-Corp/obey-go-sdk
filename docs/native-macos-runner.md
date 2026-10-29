@@ -24,5 +24,6 @@ real-provider support. Windows is unsupported.
 
 The `SDK integration` workflow now provides an isolated `macos-15` arm64 runner for
 this bundle. It records the tested source and uploads build and execution logs.
-Keep native certification pending until an actual successful workflow run supplies
-those logs. The separate FA0027 VM belongs to another festival and is not used here.
+The first passing execution and its source/binary provenance are recorded in
+[native evidence](native-macos-evidence.md). The separate FA0027 VM belongs to
+another festival and is not used here.

@@ -35,6 +35,13 @@ executes the existing native helper-child lifecycle suites. Artifacts retain
 provenance and failure logs. The macOS job proves SDK process handling, not a
 native installed-daemon integration.
 
+The first run passed all four lanes, including the native helper-process suites;
+see [native evidence](native-macos-evidence.md) for clean source, test counts and
+executable hashes. The deterministic install-and-SDK VHS recording is embedded in
+[PR #2](https://github.com/Obedience-Corp/obey-go-sdk/pull/2), with a separate fresh
+PTY/pyte replay and persisted readback checks. Docker lacks systemd, so Festival's
+service-setup warning remains visible; the check owns its foreground daemon.
+
 ## Persistent service integration
 
 `tests/consumer/service` is an independent, SDK-only HTTP application. Run
