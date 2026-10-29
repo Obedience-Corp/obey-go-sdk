@@ -10,21 +10,44 @@ Install Festival using its official bootstrap script:
 curl -fsSL https://raw.githubusercontent.com/Obedience-Corp/festival/main/install.sh | bash
 ```
 
-Follow the installer's shell setup instructions, then install stable Obey:
+Follow the installer's shell setup instructions, then open Festival:
 
 ```sh
-festival install obey --channel stable
+festival
+```
+
+In the TUI:
+
+1. Choose **Browse catalog** and press Enter.
+2. Select **obedience-corp/obey** from **official-obey** and press Enter to install.
+3. Wait for **Install complete**, then return home and quit Festival.
+
+Festival installs the `obey` CLI and `ob` companion from its official marketplace.
+Confirm the installed binary:
+
+```sh
 festival resolve obey
 obey version
 ```
 
-Festival installs the `obey` CLI and `ob` companion from its official marketplace.
-Run `festival install obey --help` for service and shell setup options. For an
-installation where you manage the daemon process yourself, use:
+Festival **0.3.25** has a catalog-routing bug that selects Festival when you choose
+Obey. The fix is in [installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73).
+The TUI demo uses that explicitly identified installer candidate. Until the fix is
+released, use the scripted installation below with the released installer.
+
+## Scripted installation
+
+For agents, automation, or users who prefer the CLI:
 
 ```sh
-festival install obey --channel stable --no-restart --no-shell-setup
+festival install obey --channel stable
 ```
+
+Run `festival install obey --help` for service and shell setup options. Use
+`--no-restart` to leave an existing daemon running, or `--no-shell-setup` to opt out
+of automatic terminal integration.
+
+## Configure the daemon
 
 Configure your camp and provider using Obey, then run the daemon. For an existing
 camp, the following commands let you inspect the available configuration:
@@ -44,7 +67,8 @@ provider in a real application.
 ## Released compatibility
 
 The installed-release test verified Festival **0.3.25** installing stable Obey
-**0.2.5** from the verified `official-obey` marketplace on Linux arm64.
+**0.2.5** through the CLI from the verified `official-obey` marketplace on Linux
+amd64 and arm64.
 The daemon returned the exact loopback-provider response, and an independent CLI
 readback confirmed one persisted turn and a stopped session.
 

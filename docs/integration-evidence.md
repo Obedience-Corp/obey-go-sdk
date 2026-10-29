@@ -39,8 +39,12 @@ The first run passed all four lanes, including the native helper-process suites;
 see [native evidence](native-macos-evidence.md) for clean source, test counts and
 executable hashes. The deterministic install-and-SDK VHS recording is embedded in
 [PR #2](https://github.com/Obedience-Corp/obey-go-sdk/pull/2), with a separate fresh
-PTY/pyte replay and persisted readback checks. Docker lacks systemd, so Festival's
-service-setup warning remains visible; the check owns its foreground daemon.
+PTY/pyte replay and persisted readback checks. The video opens Festival's TUI,
+navigates Browse catalog to Obey, installs it, then runs the SDK consumer.
+It uses the identified candidate from [installer PR #73](https://github.com/Obedience-Corp/festival-installer/pull/73),
+which fixes the released 0.3.25 catalog-routing bug. Automated CI retains the
+released CLI installation path. Docker lacks systemd; the SDK check owns its
+foreground daemon and does not claim automatic service setup passed.
 
 ## Persistent service integration
 
