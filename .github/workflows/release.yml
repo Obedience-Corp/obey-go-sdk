@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing immutable SDK tag to publish or verify
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,22 +18,30 @@ jobs:
   release:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
+      - name: Validate stable release tag
+        run: '[[ "$RELEASE_TAG" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]'
       - uses: actions/checkout@v7.0.1
         with:
+          ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@v7.0.0
         with:
           go-version: '1.24.13'
           cache: false
+      - name: Install release verification tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ripgrep libdigest-sha-perl
       - name: Verify stable tag and passing main source
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          [[ "$GITHUB_REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           revision="$(git rev-parse HEAD)"
-          test "$revision" = "$(git rev-parse "$GITHUB_REF_NAME^{commit}")"
+          test "$revision" = "$(git rev-parse "$RELEASE_TAG^{commit}")"
           git merge-base --is-ancestor "$revision" origin/main
           result="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml \
             --branch main --commit "$revision" --limit 1 \
@@ -39,12 +53,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $GITHUB_REF_NAME already exists."
+          python3 - <<'PY'
+          import os, pathlib, posixpath, re
+          notes = pathlib.Path('docs/release-notes.md').read_text()
+          base = 'https://github.com/' + os.environ['GITHUB_REPOSITORY'] + '/blob/' + os.environ['RELEASE_TAG'] + '/'
+          def link(match):
+              target = match[1]
+              if target.startswith(('https://', 'http://', '#')):
+                  return match[0]
+              path = posixpath.normpath(posixpath.join('docs', target))
+              if path.startswith('../') or path.startswith('/'):
+                  raise ValueError('Release note link escapes the repository')
+              return '](' + base + path + ')'
+          notes = re.sub(r'\]\(([^)]+)\)', link, notes)
+          (pathlib.Path(os.environ['RUNNER_TEMP']) / 'sdk-release-notes.md').write_text(notes)
+          PY
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists."
           else
-            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
-              --verify-tag --title "Obey Go SDK $GITHUB_REF_NAME" \
-              --notes-file docs/release-notes.md --latest
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
+              --verify-tag --title "Obey Go SDK $RELEASE_TAG" \
+              --notes-file "$RUNNER_TEMP/sdk-release-notes.md" --latest
           fi
       - name: Verify public versioned Go installation
-        run: bash scripts/test-published.sh "$GITHUB_REF_NAME"
+        run: bash scripts/test-published.sh "$RELEASE_TAG"
