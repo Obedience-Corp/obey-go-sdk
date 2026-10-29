@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/obediencecorp/obey-go-sdk/pkg/obey"
+	"github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
 )
 
 func TestMalformedDiagnosticsPreserveKnownJournalIdentity(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 )
 
 // PendingApprovals returns a copied snapshot bound to this exact session. Live

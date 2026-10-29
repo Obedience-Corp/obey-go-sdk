@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/obediencecorp/obey-go-sdk/internal/execclient"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/execclient"
 	"io"
 	"os"
 	"os/signal"

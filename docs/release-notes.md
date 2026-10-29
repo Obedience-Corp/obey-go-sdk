@@ -17,8 +17,8 @@ The SDK is open source under Apache-2.0, as approved by the owner, for developer
 building around the proprietary Obey daemon. The SDK license does not license the
 daemon. See [distribution decisions](distribution-decision.md).
 
-No public release/tag/install is claimed. The current module path remains
-`github.com/obediencecorp/obey-go-sdk`; canonical repository/module ownership is
-pending. Do not retag an existing version. Publication, push and CI dispatch
-are separate actions requiring authorization. Local module archives prove clean
-consumer isolation, not public availability.
+The source repository is https://github.com/Obedience-Corp/obey-go-sdk and the Go
+module is `github.com/Obedience-Corp/obey-go-sdk`. This is an initial prerelease
+source publication; no versioned release tag or native macOS acceptance is claimed.
+Local verification archives and public imports are recorded separately in the
+festival evidence. Do not retag an existing version.

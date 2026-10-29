@@ -22,8 +22,8 @@ func main() {
 		panic("expected source and output proxy")
 	}
 	source, destination := os.Args[1], os.Args[2]
-	module, version := "github.com/obediencecorp/obey-go-sdk", "v0.0.0-om0002"
-	dir := filepath.Join(destination, module, "@v")
+	module, version := "github.com/Obedience-Corp/obey-go-sdk", "v0.0.0-om0002"
+	dir := filepath.Join(destination, escapeModulePath(module), "@v")
 	must(os.MkdirAll(dir, 0755))
 	f, err := os.Create(filepath.Join(dir, version+".zip"))
 	must(err)
@@ -84,4 +84,18 @@ func must(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// Go proxy paths encode each uppercase ASCII letter as ! followed by lowercase.
+// The zip entries retain the canonical module spelling.
+func escapeModulePath(path string) string {
+	var escaped strings.Builder
+	for _, char := range path {
+		if char >= 'A' && char <= 'Z' {
+			escaped.WriteByte('!')
+			char += 'a' - 'A'
+		}
+		escaped.WriteRune(char)
+	}
+	return escaped.String()
 }

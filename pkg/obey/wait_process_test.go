@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/obediencecorp/obey-go-sdk/internal/execclient"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/execclient"
 	"os"
 	"os/signal"
 	"path/filepath"

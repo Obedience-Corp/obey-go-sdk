@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/execclient"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/execclient"
 )
 
 type Client struct {

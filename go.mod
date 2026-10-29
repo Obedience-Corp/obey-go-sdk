@@ -1,3 +1,3 @@
-module github.com/obediencecorp/obey-go-sdk
+module github.com/Obedience-Corp/obey-go-sdk
 
 go 1.24

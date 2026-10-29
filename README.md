@@ -1,6 +1,6 @@
 # obey-go-sdk
 
-Go module `github.com/obediencecorp/obey-go-sdk`, public package `pkg/obey`.
+Go module `github.com/Obedience-Corp/obey-go-sdk`, public package `pkg/obey`.
 Requires Go 1.24 or newer and an installed compatible Obey CLI. The operator
 configures Obey's daemon and authentication; the SDK does not own credentials
 or link private protobuf packages. Runtime dependencies use the standard library.
@@ -16,8 +16,9 @@ This SDK is open source under the [Apache License 2.0](LICENSE), intended for
 people building applications around the Obey daemon. The daemon is proprietary;
 this license applies to the SDK repository.
 
-This repository is currently local and unpublished. Canonical repository/module
-ownership, version tags and public module availability remain release prerequisites.
+Canonical repository: [Obedience-Corp/obey-go-sdk](https://github.com/Obedience-Corp/obey-go-sdk).
+This is a prerelease SDK. Native macOS runtime verification is still pending; see
+[release notes](docs/release-notes.md) for the tested platform scope.
 
 The current candidate provides `RunPrompt`, `StreamPrompt` with advertised live/final-only fidelity, capability
 discovery, copied options/results, typed failures and bounded child cleanup.
@@ -32,7 +33,7 @@ result, err := client.RunPrompt(ctx, prompt, &obey.RunOptions{
 })
 ```
 
-Import `github.com/obediencecorp/obey-go-sdk/pkg/obey`. See `docs/lifecycle.md`
+Import `github.com/Obedience-Corp/obey-go-sdk/pkg/obey`. See `docs/lifecycle.md`
 and the basic, streaming and service examples. Persistent `CreateSession`,
 `OpenSession`, read-only `OpenTurn`, `Session.Send`, `Turn.State`, context-only
 `Turn.Wait` and paginated `Session.Transcript` are available. Send returns durable

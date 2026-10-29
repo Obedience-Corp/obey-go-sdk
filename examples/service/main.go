@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/obediencecorp/obey-go-sdk/pkg/obey"
+	"github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
 )
 
 func handler(client *obey.Client) http.HandlerFunc {

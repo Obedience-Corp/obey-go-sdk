@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 	"strconv"
 	"strings"
 	"time"

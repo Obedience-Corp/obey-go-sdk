@@ -6,7 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/obediencecorp/obey-go-sdk/pkg/obey"
+	"github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
 	"os"
 	"os/signal"
 )

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 )
 
 // capabilityCache is owned by a Client, never shared globally. The executable

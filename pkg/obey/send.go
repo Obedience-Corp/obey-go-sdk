@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 )
 
 const maxSendBytes = 6 << 20

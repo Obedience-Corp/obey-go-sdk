@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/execclient"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/execclient"
 )
 
 func processSendSession(t *testing.T, mode string, options ...ClientOption) (*Session, string) {

@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -z "$(git status --porcelain)" ] || { echo 'Release check requires a clean owned SDK commit' >&2; exit 1; }
 printf 'SDK candidate revision: '; git rev-parse HEAD
-[ "$(go list -m)" = github.com/obediencecorp/obey-go-sdk ] || { echo 'Unexpected module identity; reconcile approved owner decision' >&2; exit 1; }
+[ "$(go list -m)" = github.com/Obedience-Corp/obey-go-sdk ] || { echo 'Unexpected module identity; reconcile approved owner decision' >&2; exit 1; }
 [ "$(go list -m all | wc -l | tr -d ' ')" = 1 ] || { echo 'Unexpected runtime module dependency' >&2; exit 1; }
 if go list -m -json all | rg -q '"Replace":'; then echo 'Source replacement is forbidden' >&2; exit 1; fi
 [ -z "$(gofmt -l pkg internal examples scripts/moduleproxy)" ] || { echo 'Go formatting drift' >&2; exit 1; }

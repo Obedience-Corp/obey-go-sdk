@@ -2,7 +2,7 @@ package obey
 
 import (
 	"encoding/json"
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 	"testing"
 )
 

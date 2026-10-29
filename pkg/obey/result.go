@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/obediencecorp/obey-go-sdk/internal/execclient"
-	"github.com/obediencecorp/obey-go-sdk/internal/protocol"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/execclient"
+	"github.com/Obedience-Corp/obey-go-sdk/internal/protocol"
 )
 
 type resultBuilder struct {
