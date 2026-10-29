@@ -51,6 +51,8 @@ type report struct {
 	RunProtocol           int                             `json:"run_protocol,omitempty"`
 	RunSession            obey.SessionRef                 `json:"run_session"`
 	RunCleanup            obey.CleanupDisposition         `json:"run_cleanup,omitempty"`
+	LiveEvents            string                          `json:"live_events"`
+	LiveEventsErrorCode   string                          `json:"live_events_error_code,omitempty"`
 	Persistent            string                          `json:"persistent"`
 	PersistentErrorCode   string                          `json:"persistent_error_code,omitempty"`
 	PersistentRef         *obey.TurnRef                   `json:"persistent_ref,omitempty"`
@@ -174,6 +176,30 @@ func execute(o options) (resultErr error) {
 	}
 	if len(initial) != 0 {
 		return errors.New("fixture camp unexpectedly contains sessions")
+	}
+	r.LiveEvents = "advertised_not_verified"
+	if !supports(caps, "session_run", "obey.session.run", 2) {
+		stream, liveErr := client.StreamPrompt(ctx, "live events must refuse before mutation", &obey.RunOptions{
+			SessionOptions:    obey.SessionOptions{Provider: providerName, Model: modelName, Mode: "discussion"},
+			RequireLiveEvents: true,
+		})
+		if stream != nil {
+			_ = stream.Close()
+			return errors.New("unadvertised live run unexpectedly returned a stream")
+		}
+		var typed *obey.Error
+		if !errors.As(liveErr, &typed) || typed.Code != "unsupported_capability" {
+			return fmt.Errorf("unadvertised live run did not safely refuse: %w", liveErr)
+		}
+		after, err := p.sessions(ctx, o.camp, "sessions-after-live-refusal.json")
+		if err != nil {
+			return err
+		}
+		if len(after) != 0 || p.fixture.count() != 0 {
+			return errors.New("unadvertised live run mutated sessions or invoked provider")
+		}
+		r.LiveEvents, r.LiveEventsErrorCode = "unsupported", typed.Code
+		fmt.Println("Live events: not advertised; typed unsupported_capability; no session or provider mutation")
 	}
 	run, err := client.RunPrompt(ctx, "public installed SDK fixture prompt", &obey.RunOptions{SessionOptions: obey.SessionOptions{Provider: providerName, Model: modelName, Mode: "discussion"}})
 	if err != nil {

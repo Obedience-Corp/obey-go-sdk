@@ -23,12 +23,35 @@ requires a typed `unsupported_protocol` refusal with identical before/after sess
 sets and no additional provider request. It then stops its own daemon and checks
 typed failure without automatic daemon startup or another provider request.
 
-Stable Obey 0.3.0 advertises only the v1 one-shot protocol, as did verified 0.2.5.
+Stable Obey 0.4.0 advertises only the v1 one-shot protocol, as did verified 0.3.0
+and 0.2.5. Requiring live events must return typed `unsupported_capability` before
+creating any session or issuing a provider request; the installed lane verifies
+that refusal independently of the successful final-result run.
 Persistent operations
 are therefore a verified safe-refusal path, not a claim of released support.
 Set `OBEY_REQUIRE_PERSISTENT=1` to make missing persistent support fail the check.
 Pin the bootstrap release with `FESTIVAL_VERSION=0.3.26`; the default follows latest
 Festival and stable Obey to detect future release regressions.
+
+To certify the current release explicitly:
+
+```sh
+FESTIVAL_VERSION=0.3.26 OBEY_EXPECT_VERSION=0.4.0 just test installed
+```
+
+The expected version must match the Festival receipt before daemon startup; the
+installed executable's version must also match that receipt. A mismatch fails
+instead of silently certifying an older release. CI resolves the latest stable
+Festival and Obey versions on its runner and passes only version strings into
+the fixture, without credentials. Record `installed-release.json` and
+`sdk-report.json` together to associate installation provenance with behavior.
+
+The local 0.4.0 baseline passed on Linux arm64 with SDK b2de559 (same runtime as
+SDK v0.1.0), public Obey source 6583d112ae82ac8539111f964a3a40cc904bae3f.
+It verified the exact deterministic answer, one provider request, one persisted
+turn with STOPPED cleanup, typed persistent refusal and offline no-autostart.
+This establishes 0.4.0 transport compatibility; it does not establish automatic
+provider/model discovery, enforced tools-off behavior or live Voice streaming.
 
 GitHub Actions runs pure race tests and the installed check on Linux amd64 and
 arm64 for pull requests, `main`, and nightly. A separate isolated macOS arm64 job

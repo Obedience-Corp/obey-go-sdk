@@ -11,6 +11,7 @@ tasks; no construction or module build probes the daemon.
 
 | Obey CLI/daemon | Advertised prompt protocol | Supported public workflow |
 | --- | --- | --- |
+| 0.4.0 | `obey.session.run` v1 | One-shot prompts, final-result streaming and owned-session cleanup; verified against the public release |
 | 0.3.0 | `obey.session.run` v1 | One-shot prompts, final-result streaming and owned-session cleanup |
 | 0.2.5 | `obey.session.run` v1 | Same v1 path, verified before the 0.3.0 release |
 
@@ -20,6 +21,14 @@ Those SDK methods remain capability-gated and return `unsupported_protocol`
 before mutation. The ordinary CLI's human session/chat commands do not imply
 support for an SDK machine protocol. `RequireLiveEvents` also refuses when the
 CLI cannot provide live events; it never silently substitutes final-only output.
+
+Obey 0.4.0's additional daemon providers and human chat features do not change
+this machine contract. The SDK still requires explicit provider/model IDs and
+has no catalog-discovery API. `Capabilities` describes machine protocols; its
+doctor health status does not establish the readiness of a selected route.
+`Status` requires its own advertised machine protocol, which these stable
+releases do not provide. Keep Obey client construction and probes conditional
+when integrating it as an optional backend.
 
 The public installed-release lane records actual versions, doctor capabilities,
 provider request counts and independent persisted-state readbacks. It follows
