@@ -31,6 +31,17 @@ clean archive check, publishes the release notes, and verifies the exact publish
 version through a fresh public Go consumer. Wait for that workflow to pass before
 declaring publication verified. GitHub provides the tagged source archives.
 
+If publication fails because the CI environment or workflow needs repair, fix the
+workflow on main and dispatch it against the existing tag:
+
+```sh
+gh workflow run release.yml --ref main -f tag=v0.1.0
+```
+
+Recovery checks out the immutable tagged source and runs the same source and
+public-import checks. It never changes the tag. Existing release notes are retained
+on reruns; new notes link to documentation at the released tag.
+
 ## Verify a published version
 
 ```sh
