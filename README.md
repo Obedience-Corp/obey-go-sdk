@@ -43,9 +43,16 @@ The version is recorded in your application's `go.mod`. See
 machine protocols.
 
 Install Obey through the [Festival installer](docs/installation.md). Stable Obey
-0.3.0 supports one-shot prompts through protocol v1. Persistent SDK APIs require
+0.4.0 supports one-shot prompts through protocol v1. Persistent SDK APIs require
 a daemon and CLI that advertise the corresponding machine protocols; unsupported
 operations return a typed error before creating a session.
+
+Provider and model IDs must currently be supplied by the application. The SDK
+does not yet expose the daemon's provider/model catalog or route readiness.
+When offering Obey alongside other backends, construct its client only after
+Obey is selected; other backends need no Obey executable or running daemon.
+See [optional provider integration](docs/provider-integration.md) for routing,
+readiness, permissions and streaming limits.
 
 ## Quick start
 
@@ -95,7 +102,7 @@ cancellation can flow through to the CLI operation.
 
 ## API overview
 
-On stable Obey 0.3.0, use `RunPrompt` or `StreamPrompt` with final-result fidelity.
+On stable Obey 0.4.0, use `RunPrompt` or `StreamPrompt` with final-result fidelity.
 The persistent workflows below require additional advertised machine protocols;
 current stable Obey returns a typed `unsupported_protocol` error before mutation.
 

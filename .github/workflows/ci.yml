@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Resolve public Festival release without sharing credentials with fixtures
+      - name: Resolve public Festival and Obey releases without sharing credentials with fixtures
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -56,6 +56,12 @@ jobs:
             exit 1
           }
           echo "FESTIVAL_VERSION=${festival_tag#v}" >> "$GITHUB_ENV"
+          obey_tag="$(gh api repos/Obedience-Corp/obey-releases/releases/latest --jq .tag_name)"
+          [[ "$obey_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo 'Latest Obey release must have a stable version tag.' >&2
+            exit 1
+          }
+          echo "OBEY_EXPECT_VERSION=${obey_tag#v}" >> "$GITHUB_ENV"
       - name: Verify candidate SDK against Festival-installed public Obey
         run: bash scripts/test-installed.sh
       - name: Retain installed-release provenance and assertions

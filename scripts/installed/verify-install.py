@@ -2,6 +2,7 @@
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 
 if os.environ.get('OBEY_SDK_TEST_CONTAINER') != '1' or not Path('/.dockerenv').is_file():
@@ -14,6 +15,9 @@ packages = json.loads((evidence / 'packages.json').read_text())['data']['package
 receipt = next(p for p in packages if p['package_id'] == 'obedience-corp/obey')
 assert receipt['source'] == 'official-obey', receipt
 assert receipt['channel'] == 'stable', receipt
+expected = os.environ.get('OBEY_EXPECT_VERSION', '')
+if expected and receipt['version'] != expected:
+    raise SystemExit(f"Expected Obey {expected}, but Festival installed {receipt['version']}")
 markets = json.loads((evidence / 'marketplaces.json').read_text())['data']
 official = next(m for m in markets if m['name'] == 'official-obey')
 assert official['verified'] is True, official
@@ -22,11 +26,17 @@ binary = Path('/demo/.obey/installer/bin/obey')
 assert (evidence / 'obey-path.txt').read_text().strip() == str(binary)
 assert binary.is_file() and os.access(binary, os.X_OK)
 assert str(binary) in receipt['files'], receipt['files']
+version = subprocess.run([str(binary), 'version'], check=True, capture_output=True,
+                         text=True, timeout=10).stdout
+if version.splitlines()[0] != 'obey ' + receipt['version']:
+    raise SystemExit('Installed executable version does not match the Festival receipt')
 summary = {
     'package': receipt['package_id'], 'version': receipt['version'],
     'channel': receipt['channel'], 'source': receipt['source'],
     'marketplace_verified': True, 'marketplace_commit': official['commit'],
     'binary_sha256': hashlib.sha256(binary.read_bytes()).hexdigest(),
 }
+if expected:
+    summary['expected_version'] = expected
 (evidence / 'installed-release.json').write_text(json.dumps(summary, indent=2) + '\n')
 print('Festival installed Obey ' + receipt['version'] + ' from verified official-obey (stable).')

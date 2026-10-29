@@ -5,6 +5,11 @@ cd "$(dirname "$0")/.."
 sdk_root=$PWD
 mode=${1:-verify}
 case "$mode" in verify|prepare) ;; *) echo 'usage: test-installed.sh [verify|prepare <container-name>]' >&2; exit 2 ;; esac
+expected_version=${OBEY_EXPECT_VERSION:-}
+if [ -n "$expected_version" ] && ! [[ "$expected_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+ echo 'OBEY_EXPECT_VERSION must be a stable version such as 0.4.0 (without v)' >&2
+ exit 2
+fi
 command -v docker >/dev/null
 docker info >/dev/null
 sdk_uid=$(id -u)
@@ -28,6 +33,7 @@ if [ -n "$(git status --porcelain)" ]; then dirty=true; fi
 container=$(docker create --init "${name_args[@]}" \
  --label obey.scenario=sdk-installed-release \
  -e OBEY_SDK_TEST_CONTAINER=1 -e "FESTIVAL_VERSION=${FESTIVAL_VERSION:-latest}" \
+ -e "OBEY_EXPECT_VERSION=$expected_version" \
  -e "SDK_SOURCE_REVISION=$revision" -e "SDK_SOURCE_DIRTY=$dirty" \
  --mount "type=bind,src=$sdk_root,dst=/sdk,readonly" \
  --mount "type=bind,src=$out,dst=/evidence" \
