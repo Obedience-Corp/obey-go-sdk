@@ -61,7 +61,8 @@ five-second owned Stop bound. No force-killed child implies cleanup success.
 
 Linux real-daemon behavior is tested separately from native macOS lifecycle
 certification. Windows builds but equivalent native graceful cleanup remains
-unsupported/unverified. This local candidate does not claim publication.
+unsupported/unverified. See [release notes](release-notes.md) for released CLI
+compatibility; native SDK helper-process proof does not certify a native daemon.
 
 ## Persistent handles
 

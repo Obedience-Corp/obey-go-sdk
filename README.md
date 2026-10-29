@@ -21,8 +21,7 @@ The SDK uses the installed Obey CLI as its transport and has standard-library-on
 runtime dependencies.
 
 The SDK is open source under Apache-2.0. The Obey daemon is proprietary and runs
-separately. This SDK is currently a prerelease; see [platform support](#platform-support)
-for the verified runtime scope.
+separately. See [platform support](#platform-support) for the verified runtime scope.
 
 ## Installation
 
@@ -30,7 +29,7 @@ Requires **Go 1.24+**, a compatible Obey CLI on `PATH`, and a running Obey daemo
 with your camp, provider, and model configured.
 
 ```sh
-go get github.com/Obedience-Corp/obey-go-sdk@main
+go get github.com/Obedience-Corp/obey-go-sdk@v0.1.0
 ```
 
 Import the public package:
@@ -39,12 +38,12 @@ Import the public package:
 import "github.com/Obedience-Corp/obey-go-sdk/pkg/obey"
 ```
 
-The prerelease install resolves `main` to a Go pseudo-version recorded in your
-application's `go.mod`. See [compatibility](docs/compatibility.md) for capability
-discovery and supported machine protocols.
+The version is recorded in your application's `go.mod`. See
+[compatibility](docs/compatibility.md) for capability discovery and supported
+machine protocols.
 
 Install Obey through the [Festival installer](docs/installation.md). Stable Obey
-0.2.5 supports one-shot prompts through protocol v1. Persistent SDK APIs require
+0.3.0 supports one-shot prompts through protocol v1. Persistent SDK APIs require
 a daemon and CLI that advertise the corresponding machine protocols; unsupported
 operations return a typed error before creating a session.
 
@@ -95,6 +94,10 @@ Daemon requests accept a `context.Context`, so HTTP request contexts and applica
 cancellation can flow through to the CLI operation.
 
 ## API overview
+
+On stable Obey 0.3.0, use `RunPrompt` or `StreamPrompt` with final-result fidelity.
+The persistent workflows below require additional advertised machine protocols;
+current stable Obey returns a typed `unsupported_protocol` error before mutation.
 
 | Workflow | API |
 | --- | --- |
@@ -171,6 +174,9 @@ This installs Obey through released Festival, exercises the SDK against the actu
 daemon with a deterministic loopback provider, and verifies persisted session state.
 It needs no private Obey checkout or provider credentials. CI runs it on pull
 requests, pushes to `main`, and nightly to catch release compatibility regressions.
+
+For SDK maintainers, [release instructions](docs/releasing.md) describe source
+checks, immutable tags, automated publication and clean external import verification.
 
 ## License
 

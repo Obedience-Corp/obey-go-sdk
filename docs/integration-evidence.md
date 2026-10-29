@@ -23,10 +23,11 @@ requires a typed `unsupported_protocol` refusal with identical before/after sess
 sets and no additional provider request. It then stops its own daemon and checks
 typed failure without automatic daemon startup or another provider request.
 
-Stable Obey 0.2.5 advertises only the v1 one-shot protocol. Persistent operations
+Stable Obey 0.3.0 advertises only the v1 one-shot protocol, as did verified 0.2.5.
+Persistent operations
 are therefore a verified safe-refusal path, not a claim of released support.
 Set `OBEY_REQUIRE_PERSISTENT=1` to make missing persistent support fail the check.
-Pin the bootstrap release with `FESTIVAL_VERSION=0.3.25`; the default follows latest
+Pin the bootstrap release with `FESTIVAL_VERSION=0.3.26`; the default follows latest
 Festival and stable Obey to detect future release regressions.
 
 GitHub Actions runs pure race tests and the installed check on Linux amd64 and
@@ -87,5 +88,6 @@ Counts prove original identities, orchestration and no replay; they do not prove
 semantic conversation memory, external tool effects or real-provider performance.
 Fresh capability discovery and Ping timings are setup-only measurements; provider
 latency is unmeasured. Public SDK source distribution has been verified separately
-through the normal Go proxy and checksum database. A versioned release still needs
-the festival's remaining certification gates.
+through the normal Go proxy and checksum database. Those certification gates are
+complete. Versioned releases additionally require clean source, passing main CI
+and the [published Go-module check](releasing.md).

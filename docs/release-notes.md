@@ -1,27 +1,45 @@
-# Local candidate release notes
+# Obey Go SDK v0.1.0
 
-This candidate adds a standard-library subprocess SDK for an installed Obey CLI.
-It preserves run-v1/default CLI compatibility and selects advertised run-v2 only
-before mutation. Persistent handles expose acceptance, exact state/history/wait,
-scoped observation, explicit approvals and controls. The application owns key/ref
-storage; the SDK never automatically retries mutations or starts the daemon.
+The first versioned Go SDK for applications using the proprietary Obey daemon.
+Requires Go 1.24+, an installed Obey CLI and an operator-managed daemon.
 
-Linux arm64 certification uses actual CLI/daemon processes and a deterministic
-provider ledger, including restart/crash, partial output, cancellation, cleanup,
-queue/dedup, wrong scope and independent SDK-only service adoption. See lifecycle
-and integration evidence for limits. Provider counts are not semantic memory or
-real-provider latency evidence. Windows is unsupported. Native Darwin arm64 SDK
-process lifecycle passed in an isolated runner; see [native evidence](native-macos-evidence.md).
-Public Festival-installed Obey 0.2.5 also passed one-shot integration and safe
-persistent-capability refusal on Linux amd64 and arm64. The stable release does
-not yet advertise persistent machine APIs.
+```sh
+go get github.com/Obedience-Corp/obey-go-sdk@v0.1.0
+```
 
-The SDK is open source under Apache-2.0, as approved by the owner, for developers
-building around the proprietary Obey daemon. The SDK license does not license the
-daemon. See [distribution decisions](distribution-decision.md).
+- Submit prompts with `RunPrompt` and `StreamPrompt`, using contexts, stdin input,
+  typed results/errors and bounded subprocess output and cleanup.
+- Discover machine capabilities before selecting a protocol. Preserve legacy v1
+  compatibility and refuse unavailable features before mutation.
+- Keep standard-library-only runtime dependencies and the Apache-2.0 license.
+  Neither private Obey code, protobuf modules nor provider SDKs are dependencies.
 
-The source repository is https://github.com/Obedience-Corp/obey-go-sdk and the Go
-module is `github.com/Obedience-Corp/obey-go-sdk`. This is an initial prerelease
-source publication; no versioned release tag is claimed.
-Local verification archives and public imports are recorded separately in the
-festival evidence. Do not retag an existing version.
+## Released compatibility
+
+Public Festival 0.3.26 installs Obey 0.3.0 from the verified official marketplace.
+Installed-daemon integration verifies exact prompt output, one persisted turn,
+stopped owned-session cleanup, safe capability refusal and offline failure without
+daemon startup. Obey 0.2.5 was also verified through the v1 path.
+
+**Obey 0.3.0 advertises only `obey.session.run` v1.** Prompt streaming therefore has
+final-result fidelity. Persistent session/turn, observation, approval and control
+SDK methods require additional advertised machine protocols and currently return
+`unsupported_protocol` before mutation. The SDK does not start the daemon or retry
+mutations automatically. Applications own their persistence, retries and approvals.
+
+Linux amd64/arm64 use actual installed CLI/daemon integration. Native macOS arm64
+SDK process lifecycle is verified in an isolated runner; it does not certify the
+native daemon or every provider. Windows SDK runtime remains unsupported.
+
+See [compatibility](compatibility.md), [lifecycle](lifecycle.md) and
+[integration evidence](integration-evidence.md) for exact scope. Provider fixtures
+prove orchestration and persisted state, not model quality or external tool effects.
+
+## Distribution
+
+The SDK is open source under [Apache-2.0](../LICENSE). The daemon is distributed
+separately under its own terms. The canonical module is
+`github.com/Obedience-Corp/obey-go-sdk`; import its `pkg/obey` package.
+Releases use immutable Git tags. The publication workflow verifies an independent
+consumer through the public Go proxy and checksum database, including license
+retention and the absence of source replacements or private dependencies.
