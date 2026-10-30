@@ -177,6 +177,9 @@ func execute(o options) (resultErr error) {
 	if len(initial) != 0 {
 		return errors.New("fixture camp unexpectedly contains sessions")
 	}
+	if err := p.discovery(ctx, client); err != nil {
+		return fmt.Errorf("discovery: %w", err)
+	}
 	r.LiveEvents = "advertised_not_verified"
 	if !supports(caps, "session_run", "obey.session.run", 2) {
 		stream, liveErr := client.StreamPrompt(ctx, "live events must refuse before mutation", &obey.RunOptions{
@@ -449,6 +452,11 @@ func (p *probe) unavailable(ctx context.Context) error {
 	defer fresh.Close()
 	call, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
+	_, discoveryErr := fresh.Providers(call)
+	var discoveryFailure *obey.Error
+	if !errors.As(discoveryErr, &discoveryFailure) || discoveryFailure.Code != "daemon_unavailable" {
+		return fmt.Errorf("offline discovery did not return daemon_unavailable: %w", discoveryErr)
+	}
 	result, err := fresh.RunPrompt(call, "unavailable daemon must not submit", &obey.RunOptions{SessionOptions: obey.SessionOptions{Provider: providerName, Model: modelName, Mode: "discussion"}})
 	var typed *obey.Error
 	if !errors.As(err, &typed) || (typed.Code != "create_session" && typed.Code != "daemon_unavailable") {
@@ -557,13 +565,17 @@ func (d *ownedDaemon) stop() error {
 }
 
 type completionFixture struct {
-	mu       sync.Mutex
-	requests int
+	mu              sync.Mutex
+	requests        int
+	catalogRequests int
 }
 
 func (f *completionFixture) count() int { f.mu.Lock(); defer f.mu.Unlock(); return f.requests }
 func (f *completionFixture) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet && r.URL.Path == "/v1/models" {
+		f.mu.Lock()
+		f.catalogRequests++
+		f.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{"object": "list", "data": []any{map[string]any{"id": modelName, "object": "model", "created": 1, "owned_by": "fixture"}}})
 		return

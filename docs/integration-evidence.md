@@ -15,6 +15,13 @@ marketplace verification, versions, source provenance and executable hashes in
 The only provider is an in-process OpenAI-compatible loopback fixture with a dummy
 key. No external model credentials or private checkout are required.
 
+With Obey 0.5.0+, assertions also cover metadata-only provider inventory with
+zero endpoint requests, selected model IDs and unknown capability preservation,
+exactly one fetch for an explicit refresh, structured preflight, and tools-off/live
+requirements reported unsupported. Discovery must leave the session set empty and
+inference count zero. After daemon shutdown, provider discovery must return typed
+`daemon_unavailable` without auto-start.
+
 Assertions cover the exact prompt response, negotiated protocol, exact session and
 camp identity, one provider request, and an independent CLI readback of one turn
 with the session stopped. When persistent creation is advertised, the test also
@@ -36,7 +43,7 @@ Festival and stable Obey to detect future release regressions.
 To certify the current release explicitly:
 
 ```sh
-FESTIVAL_VERSION=0.3.26 OBEY_EXPECT_VERSION=0.4.0 just test installed
+FESTIVAL_VERSION=0.3.26 OBEY_EXPECT_VERSION=0.5.0 just test installed
 ```
 
 The expected version must match the Festival receipt before daemon startup; the

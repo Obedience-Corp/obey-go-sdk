@@ -11,6 +11,7 @@ tasks; no construction or module build probes the daemon.
 
 | Obey CLI/daemon | Advertised prompt protocol | Supported public workflow |
 | --- | --- | --- |
+| 0.5.0 | `obey.session.run` v1 and provider discovery/check v1 | One-shot prompts plus typed provider/model catalogs and route preflight |
 | 0.4.0 | `obey.session.run` v1 | One-shot prompts, final-result streaming and owned-session cleanup; verified against the public release |
 | 0.3.0 | `obey.session.run` v1 | One-shot prompts, final-result streaming and owned-session cleanup |
 | 0.2.5 | `obey.session.run` v1 | Same v1 path, verified before the 0.3.0 release |
@@ -22,13 +23,18 @@ before mutation. The ordinary CLI's human session/chat commands do not imply
 support for an SDK machine protocol. `RequireLiveEvents` also refuses when the
 CLI cannot provide live events; it never silently substitutes final-only output.
 
-Obey 0.4.0's additional daemon providers and human chat features do not change
-this machine contract. The SDK still requires explicit provider/model IDs and
-has no catalog-discovery API. `Capabilities` describes machine protocols; its
-doctor health status does not establish the readiness of a selected route.
-`Status` requires its own advertised machine protocol, which these stable
-releases do not provide. Keep Obey client construction and probes conditional
-when integrating it as an optional backend.
+Provider discovery requires Obey 0.5.0+ and its read-only
+`doctor --json --capabilities-only` handshake. Earlier CLIs refuse before any
+provider operation; the SDK never falls back to broad doctor health checks or
+local configuration. The CLI must target a daemon advertising provider metadata.
+`Capabilities` remains the general doctor report and its health status is not a
+selected-route readiness verdict. `Status` requires a separate machine protocol.
+Keep Obey construction and probes conditional when it is an optional backend.
+
+Preflight checks provider/model availability and explicit tool/live requirements.
+It does not validate a camp or working directory; requesting those scope checks
+returns `unsupported_capability`. Stable 0.5.0 still cannot enforce tools-off or
+provide live prompt events. Catalog discovery does not enable persistent APIs.
 
 The public installed-release lane records actual versions, doctor capabilities,
 provider request counts and independent persisted-state readbacks. It follows
