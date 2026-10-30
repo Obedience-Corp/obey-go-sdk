@@ -1,5 +1,23 @@
 # Integration evidence
 
+## Obey 0.5.0 discovery verification
+
+Clean SDK candidate `1459b893d7e8a252e90159e4692ea2e913c498e7` passed the public
+installed-release check on Linux arm64. Released Festival installed verified
+stable Obey 0.5.0, source `950e031594b4374730e2e4fe0131b2388673d18a`, from signed
+marketplace commit `35114030e6941e7d71125c39e25429574fd1176b`. Executable SHA-256:
+`71060d71044bb1b7f3a70a0958d16d2cf6feae886ca3e025008b4d6d91becdce`.
+
+The independent Go1.24 consumer retained Apache LICENSE and exactly app+SDK
+modules. It verified metadata inventory without endpoint requests, selected-model
+IDs with unknown capabilities, one fetch for explicit refresh, structured
+readiness and unsupported tools-off/live requirements, with no discovery sessions
+or inference. The actual daemon then returned the exact fixture answer once,
+persisted one turn and stopped the owned session. Persistent/live execution
+refused safely; offline discovery returned `daemon_unavailable` without startup.
+This proves orchestration against the public daemon with a loopback provider,
+not external model quality, microphone acceptance or tools-off enforcement.
+
 ## Public installed-release check
 
 `just test installed` builds the candidate SDK into a clean independent Go 1.24
