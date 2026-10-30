@@ -1,3 +1,31 @@
+# Obey Go SDK v0.2.0
+
+Typed provider/model discovery and selected-route preflight for Obey 0.5.0+.
+
+```sh
+go get github.com/Obedience-Corp/obey-go-sdk@v0.2.0
+```
+
+- `Providers` reads daemon-owned route metadata without contacting providers.
+- `Models` and `RefreshModels` return raw IDs, freshness and nullable capabilities.
+- `Preflight` reports selected-route and execution-requirement evidence without
+  creating a session or invoking inference.
+- Read-only capability negotiation refuses older CLIs before provider operations.
+  Discovery preserves caller cancellation, deadlines, socket routing and typed errors.
+- Independent snapshots prevent callers from sharing mutable catalog state.
+
+Go 1.24+, Apache-2.0 and standard-library-only runtime dependencies are unchanged.
+Existing prompt APIs retain run-v1 compatibility with Obey 0.4.0 and earlier.
+Obey 0.5.0 remains final-only and does not enforce tools-off. Persistent SDK APIs
+still require additional advertised protocols. Preflight does not validate a
+camp/workdir and refuses requested scope checks it cannot perform.
+
+See [optional provider integration](provider-integration.md),
+[compatibility](compatibility.md) and [integration evidence](integration-evidence.md)
+for supported behavior and verification limits.
+
+---
+
 # Obey Go SDK v0.1.0
 
 The first versioned Go SDK for applications using the proprietary Obey daemon.

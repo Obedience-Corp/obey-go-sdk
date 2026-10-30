@@ -29,7 +29,7 @@ Requires **Go 1.24+**, a compatible Obey CLI on `PATH`, and a running Obey daemo
 with your camp, provider, and model configured.
 
 ```sh
-go get github.com/Obedience-Corp/obey-go-sdk@v0.1.0
+go get github.com/Obedience-Corp/obey-go-sdk@v0.2.0
 ```
 
 Import the public package:
@@ -43,14 +43,15 @@ The version is recorded in your application's `go.mod`. See
 machine protocols.
 
 Install Obey through the [Festival installer](docs/installation.md). Stable Obey
-0.4.0 supports one-shot prompts through protocol v1. Persistent SDK APIs require
+0.5.0 supports one-shot prompts through protocol v1. Persistent SDK APIs require
 a daemon and CLI that advertise the corresponding machine protocols; unsupported
 operations return a typed error before creating a session.
 
-Provider and model IDs must currently be supplied by the application. The SDK
-does not yet expose the daemon's provider/model catalog or route readiness.
-When offering Obey alongside other backends, construct its client only after
-Obey is selected; other backends need no Obey executable or running daemon.
+Use `Providers`, `Models`, `RefreshModels` and `Preflight` with Obey 0.5.0+ to
+populate route selectors and check the selected route. Catalogs retain freshness,
+unknown capabilities and raw IDs. Older CLIs return a typed `unsupported_protocol`
+error; preserve manual route entry. When offering Obey alongside other backends,
+construct its client only after Obey is selected.
 See [optional provider integration](docs/provider-integration.md) for routing,
 readiness, permissions and streaming limits.
 
@@ -102,12 +103,14 @@ cancellation can flow through to the CLI operation.
 
 ## API overview
 
-On stable Obey 0.4.0, use `RunPrompt` or `StreamPrompt` with final-result fidelity.
+On stable Obey 0.5.0, use `RunPrompt` or `StreamPrompt` with final-result fidelity.
 The persistent workflows below require additional advertised machine protocols;
 current stable Obey returns a typed `unsupported_protocol` error before mutation.
 
 | Workflow | API |
 | --- | --- |
+| Discover daemon routes | `Client.Providers`, `Client.Models`, `Client.RefreshModels` |
+| Check selected route requirements | `Client.Preflight` |
 | Run a prompt | `Client.RunPrompt`, `Client.StreamPrompt` |
 | Create or reopen a session | `Client.CreateSession`, `Client.OpenSession` |
 | Submit durable work | `Session.Send` |

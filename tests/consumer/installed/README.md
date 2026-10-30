@@ -17,7 +17,9 @@ The application requires both `OBEY_SDK_TEST_CONTAINER=1` and Docker's isolation
 marker before any fixture mutation. Do not run it directly on the host.
 The tagged lifecycle tests also require these guards.
 
-The check verifies one-shot execution and cleanup through SDK and independent CLI
+With Obey 0.5.0+ the check verifies typed provider/model catalogs, metadata-only
+inventory, selected refresh, requirement refusal and no discovery inference or
+session mutation. It also verifies one-shot execution and cleanup through SDK and independent CLI
 readbacks, persistent execution when advertised or safe refusal otherwise, and
 failure without automatic daemon startup after its own daemon has stopped.
 It never treats an absent capability as successful persistent execution.
